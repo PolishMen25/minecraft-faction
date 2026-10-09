@@ -79,6 +79,7 @@ public final class KothPlugin extends JavaPlugin {
     private String lastWarnKey = "";
     private OutpostManager outposts;
     private Leaderboard leaderboard;
+    private FreeZones freeZones;
 
     @Override
     public void onEnable() {
@@ -97,6 +98,9 @@ public final class KothPlugin extends JavaPlugin {
         getCommand("ap").setTabCompleter(outposts);
         leaderboard = new Leaderboard(this, outposts);
         leaderboard.enable();
+        // Zones libres du spawn (box de minage, arène de duel) : exceptions à la safezone
+        freeZones = new FreeZones(this);
+        freeZones.enable();
     }
 
     @Override
@@ -131,6 +135,7 @@ public final class KothPlugin extends JavaPlugin {
         loadZones();
         outposts.loadZones();
         leaderboard.update();
+        freeZones.loadZones();
     }
 
     // ------------------------------------------------------------------ zones
@@ -423,6 +428,17 @@ public final class KothPlugin extends JavaPlugin {
                             + " (rayon " + z.radius() + ")");
                 }
             }
+            case "zones" -> {
+                if (!admin) {
+                    return noPerm(sender);
+                }
+                if (freeZones.all().isEmpty()) {
+                    sender.sendMessage(PREFIX + "Aucune zone libre (section free-zones de config.yml).");
+                }
+                for (String line : freeZones.descriptions()) {
+                    sender.sendMessage(PREFIX + line);
+                }
+            }
             case "top" -> {
                 ConfigurationSection w = stats.getConfigurationSection("wins");
                 if (w == null || w.getKeys(false).isEmpty()) {
@@ -518,7 +534,7 @@ public final class KothPlugin extends JavaPlugin {
                 sender.sendMessage(PREFIX + "Classement placé en " + x + " " + y + " " + z
                         + " (affiché dès que le chunk est chargé, mis à jour toutes les 60 s).");
             }
-            default -> sender.sendMessage(PREFIX + "/koth <info|list|top" + (admin ? "|start|stop|create|delete|reload|classement" : "") + ">");
+            default -> sender.sendMessage(PREFIX + "/koth <info|list|top" + (admin ? "|start|stop|create|delete|reload|classement|zones" : "") + ">");
         }
         return true;
     }
@@ -529,7 +545,7 @@ public final class KothPlugin extends JavaPlugin {
         if (args.length == 1) {
             List<String> subs = new ArrayList<>(List.of("info", "list", "top"));
             if (sender.hasPermission("koth.admin")) {
-                subs.addAll(List.of("start", "stop", "create", "delete", "reload", "classement"));
+                subs.addAll(List.of("start", "stop", "create", "delete", "reload", "classement", "zones"));
             }
             for (String s : subs) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) {

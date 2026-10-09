@@ -74,3 +74,19 @@ leaderboard:
   x: 0.5
   y: 65.0
   z: 0.5
+
+# Zones libres : cuboïdes qui restent en safezone FactionsUUID (donc non claimables)
+# mais où certaines actions sont autorisées. Rechargées par /koth reload, listées par /koth zones.
+# nom: {world, x1, y1, z1, x2, y2, z2, break, place, pvp}
+#   break: true  -> les joueurs peuvent casser les blocs (sauf reinforced_deepslate, bedrock, barrier)
+#   place: [...] -> matériaux que l'on peut poser (ex. [TORCH, WALL_TORCH])
+#   break-only: [...] -> si non vide, seuls ces matériaux peuvent être cassés (protège l'escalier, le bord, l'abri)
+#   pvp:   true  -> PvP autorisé si victime et attaquant (flèche comprise) sont tous deux dans la zone ;
+#                   la mort dans la zone ne fait pas perdre de power
+free-zones:
+  # Box de minage du spawn
+  box: {world: world, x1: -64, y1: 40, z1: -2032, x2: -33, y2: 80, z2: -2001, break: true, place: [TORCH, WALL_TORCH], pvp: false,
+        break-only: [STONE, COBBLESTONE, COAL_ORE, IRON_ORE, COPPER_ORE, GOLD_ORE, REDSTONE_ORE, LAPIS_ORE,
+                     DIAMOND_ORE, EMERALD_ORE, DEEPSLATE, GRAVEL, ANDESITE, DIORITE, GRANITE, TORCH, WALL_TORCH]}
+  # Arène de duel du spawn
+  duel: {world: world, x1: 64, y1: 55, z1: -2192, x2: 95, y2: 90, z2: -2161, break: false, place: [], pvp: true}

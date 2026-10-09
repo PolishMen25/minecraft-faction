@@ -313,6 +313,15 @@ Panneau flottant (TextDisplay) devant la sortie du spawn, mis à jour toutes les
 | `/koth classement <x> <y> <z> [monde]` | place (ou déplace) le classement (console OK, monde `world` par défaut) |
 | `/koth classement off` | retire le classement |
 
+### Zones libres (box, duel)
+
+Cuboïdes du spawn qui restent en safezone FactionsUUID (donc non claimables) mais avec des exceptions, définis dans `config.yml` sous `free-zones` (`world`, `x1 y1 z1`, `x2 y2 z2`, `break`, `place`, `pvp`) :
+
+- **box** (minage) : casse de blocs autorisée (sauf `reinforced_deepslate`, `bedrock`, `barrier`), pose de torches.
+- **duel** (arène) : PvP autorisé si les deux joueurs (ou le tireur d'une flèche) sont dans le cuboïde, et pas de perte de power à la mort.
+
+FactionsUUID bloque ces actions à la priorité NORMAL ; LifeKoth lève l'annulation en HIGHEST. `/koth zones` liste les zones, `/koth reload` les recharge.
+
 Les commandes d'admin demandent la permission `koth.admin` (op par défaut).
 
 ## Arborescence du dépôt

@@ -7,7 +7,7 @@ softdepend: [FactionsUUID, Factions, Essentials]
 commands:
   koth:
     description: Events King of the Hill
-    usage: /koth <info|list|top|start|stop|create|delete|reload|classement>
+    usage: /koth <info|list|top|start|stop|create|delete|reload|classement|zones>
   ap:
     description: Avant-postes capturables par les factions
     aliases: [avantposte]
