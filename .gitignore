@@ -2,3 +2,5 @@
 backups/
 *.tar.zst
 plugins/koth/target/
+plugins/items/target/
+plugins/core/target/

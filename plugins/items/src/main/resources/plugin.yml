@@ -1,0 +1,14 @@
+name: LifeItems
+version: '${project.version}'
+main: fr.lifecraft.items.LifeItemsPlugin
+api-version: '1.21'
+description: Minerai et équipement de faille sur mesure (sans resource pack)
+commands:
+  lifeitems:
+    description: Administration des objets LifeItems
+    aliases: [li]
+    usage: /lifeitems <give|list|reload>
+permissions:
+  lifeitems.admin:
+    description: Donner des objets custom, lister et recharger la config
+    default: op

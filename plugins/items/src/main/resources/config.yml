@@ -1,0 +1,50 @@
+# LifeItems : minerai « Éclat de faille » et équipement de faille.
+# Après modification : /lifeitems reload (les objets déjà créés gardent leurs anciennes stats).
+
+# Minerai : les blocs cassés peuvent lâcher un Éclat de faille.
+ore:
+  # Mondes où le minerai existe.
+  worlds: [world]
+  # Le bloc doit être cassé strictement sous cette altitude (Y).
+  max-y: 16
+  # Blocs qui peuvent lâcher un éclat.
+  blocks: [DEEPSLATE, STONE]
+  # Chance de drop par bloc cassé, en pourcentage (0.4 = 0,4 %).
+  chance-percent: 0.4
+  # Bonus de Fortune : chance finale = chance * (1 + niveau * bonus). 0.5 => Fortune III = x2,5.
+  fortune-bonus-per-level: 0.5
+  # Pas de drop avec une pioche Délicatesse (Silk Touch) ?
+  disable-with-silk-touch: true
+  # Quantité lâchée.
+  amount: 1
+  # Message dans la barre d'action au drop (vide = aucun).
+  message: "&5✦ &dVous avez trouvé un &5Éclat de faille&d !"
+  # Son joué au drop (nom de son Bukkit/Minecraft, vide = aucun).
+  sound: "minecraft:block.amethyst_block.chime"
+  sound-volume: 1.0
+  sound-pitch: 0.8
+
+# Statistiques de l'équipement : bonus ajoutés aux valeurs de la netherite.
+stats:
+  # Armure par pièce (netherite : casque 3, plastron 8, jambières 6, bottes 3).
+  armor-bonus: 1.0
+  # Robustesse (armor toughness) par pièce (netherite : 3).
+  toughness-bonus: 1.0
+  # Résistance au recul par pièce (netherite : 0.1 ; 0.1 = 10 %).
+  knockback-resistance-bonus: 0.0
+  # Dégâts d'attaque en plus (épée netherite : 8, pioche : 6).
+  sword-damage-bonus: 1.0
+  pickaxe-damage-bonus: 0.0
+
+# Recettes d'artisanat : pièce en netherite au centre + éclats autour.
+recipes:
+  # Nombre d'Éclats de faille par recette (1 à 8). 8 = la grille complète autour du centre.
+  shards-per-item: 8
+
+# Réparation à l'enclume avec des Éclats de faille.
+anvil:
+  enabled: true
+  # Part de la durabilité maximale rendue par éclat (0.25 = 25 %, soit 4 éclats pour tout réparer).
+  repair-fraction-per-shard: 0.25
+  # Niveaux d'XP par éclat consommé.
+  levels-per-shard: 1

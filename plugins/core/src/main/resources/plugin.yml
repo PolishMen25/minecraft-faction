@@ -1,0 +1,34 @@
+name: LifeCore
+version: '${project.version}'
+main: fr.lifecraft.core.LifeCore
+api-version: '1.21'
+description: Scoreboard, tablist, bienvenue, annonces et liens pour le serveur Faction
+softdepend: [Vault, FactionsUUID, Factions, LuckPerms, Essentials]
+commands:
+  sb:
+    description: Masquer ou afficher le scoreboard
+    usage: /sb
+    aliases: [scoreboard]
+    permission: lifecore.sb
+  discord:
+    description: Lien du Discord
+    usage: /discord
+    permission: lifecore.links
+  site:
+    description: Lien du site
+    usage: /site
+    permission: lifecore.links
+  lifecore:
+    description: Administration de LifeCore
+    usage: /lifecore reload
+    permission: lifecore.admin
+permissions:
+  lifecore.sb:
+    description: Utiliser /sb
+    default: true
+  lifecore.links:
+    description: Utiliser /discord et /site
+    default: true
+  lifecore.admin:
+    description: Recharger la configuration
+    default: op

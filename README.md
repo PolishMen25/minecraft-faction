@@ -367,6 +367,47 @@ Les commandes d'admin demandent la permission `koth.admin` (op par défaut).
 bash ~/minecraft-faction/scripts/deploy-all.sh
 ```
 
+## Scoreboard et tablist (plugin LifeCore)
+
+Plugin du kit (`plugins/core/`, jar `LifeCore-1.0.0.jar`, compilé comme LifeKoth) qui apporte :
+
+- **Scoreboard latéral** par joueur (faction, power, terres, argent, kills/morts, joueurs en ligne, adresse), mis à jour toutes les 2 s sans clignotement ;
+- **Tablist** : header/footer avec `{online}`, `{max}`, `{tps}`, `{ping}`, et nom précédé du préfixe LuckPerms puis du tag de faction ;
+- **Bienvenue** : annonce « Bienvenue à X, n°N ! » à la première connexion, title configurable ;
+- **Annonces automatiques** en rotation (toutes les 5 min par défaut).
+
+| Commande | Rôle |
+|---|---|
+| `/sb` | Masque ou affiche son scoreboard (choix mémorisé) |
+| `/discord`, `/site` | Affichent un lien cliquable |
+| `/lifecore reload` | Recharge la config (permission `lifecore.admin`) |
+
+Tout se règle dans `plugins/LifeCore/config.yml` (lignes du scoreboard, titre, adresse, header/footer, annonces, liens Discord et site). Les valeurs FactionsUUID sont lues par réflexion ; `?` s'affiche si une valeur est introuvable. Nécessite Vault pour l'argent et les préfixes.
+
+## Contenu sur mesure (plugin LifeItems)
+
+Plugin maison (`plugins/items/`, jar `LifeItems-1.0.0.jar`, à copier dans `plugins/`), **sans resource pack** : tous les objets reposent sur des items vanilla renommés, un client vanilla les voit tels quels. Config commentée : `plugins/LifeItems/config.yml` (`/lifeitems reload` recharge config et recettes ; les objets déjà créés gardent leurs anciennes stats).
+
+- **Éclat de faille** (`eclat_faille`, `amethyst_shard` violet) : en cassant du `deepslate` ou de la `stone` sous Y=16 dans `world`, 0,4 % de chance de lâcher un éclat (Fortune multiplie la chance, `ore.fortune-bonus-per-level`). Pas de drop en créatif, avec Délicatesse (réglable) ni si la casse est annulée (protections). Message en action bar et son à chaque drop.
+- **Équipement de faille** (base netherite, nom violet, lore, tag PDC `lifeitems:id`) : stats de la netherite + 1 armure et + 1 robustesse par pièce, + 1 dégât pour l'épée (`stats.*`). Enchantable normalement.
+- **Recettes** : pièce en netherite au centre + 8 éclats autour (`recipes.shards-per-item`, 1 à 8). Découvertes à la connexion. Les objets custom ne servent pas d'ingrédient aux recettes vanilla (ni l'éclat, ni l'équipement).
+- **Réparation** : à l'enclume, équipement + éclats (25 % de la durabilité par éclat, 1 niveau d'XP par éclat). Enchantements conservés.
+
+| Id | Objet |
+|---|---|
+| `eclat_faille` | Éclat de faille |
+| `casque_faille`, `plastron_faille`, `jambieres_faille`, `bottes_faille` | Armure de faille |
+| `epee_faille`, `pioche_faille` | Outils de faille |
+
+| Commande | Rôle |
+|---|---|
+| `/lifeitems give <joueur> <id> [quantité]` | donne un objet (alias `/li`) |
+| `/lifeitems list`, `/lifeitems reload` | liste des ids, recharge la config |
+
+Permission `lifeitems.admin` (op par défaut).
+
+**Vente** : EssentialsX identifie les items par matériau (et donnée héritée), pas par NBT/PDC : il est impossible de fixer un prix pour l'Éclat de faille seul. Une ligne `amethyst_shard: 500` dans `plugins/Essentials/worth.yml` vendrait aussi les éclats vanilla (et probablement les éclats de faille au même prix) ; ne rien mettre est le choix sûr. Pour une vente propre, il faudrait une commande dédiée ou une boutique à part (non fournie).
+
 ## Arborescence du dépôt
 
 ```
