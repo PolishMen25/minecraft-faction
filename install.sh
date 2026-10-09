@@ -35,6 +35,10 @@ PLUGINS=(
   "OldCombatMechanics||OldCombatMechanics|kernitus/OldCombatMechanics|^OldCombatMechanics.*\.jar$|https://hangar.papermc.io/kernitus/OldCombatMechanics"
   "LuckPerms|luckperms||||"
   "Chunky|chunky|Chunky|||"
+  # Journal des blocs (qui a cassé/posé quoi) : rollback des griefs, preuves de triche
+  "CoreProtect|coreprotect||||"
+  # Anti-cheat compatible ViaVersion (clients 1.8 à la dernière version)
+  "GrimAC|grimac||||"
   # Plugin KOTH du kit, compilé par GitHub Actions (plugins/koth)
   "LifeKoth|||PolishMen25/minecraft-faction|^LifeKoth.*\.jar$|"
   "Vault|||MilkBowl/Vault|^Vault\.jar$|"

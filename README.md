@@ -17,6 +17,10 @@ Kit d'installation d'un serveur **Minecraft PvP Faction**, inspiré de LifeCraft
 | EssentialsX (+ Spawn, Chat) | /home, /tpa, /spawn, kits, économie |
 | LuckPerms | Grades et permissions |
 | Vault | Lien entre l'économie et les permissions |
+| CoreProtect | Journal de chaque bloc posé, cassé ou coffre ouvert : rollback des griefs, preuves |
+| GrimAC | Anti-cheat compatible ViaVersion (alertes seulement, voir plus bas) |
+| Chunky | Pré-génération de la carte |
+| LifeKoth | Events King of the Hill (plugin du kit) |
 
 `install.sh` récupère **la dernière version de chaque plugin au moment où il tourne** : via Modrinth, Hangar ou GitHub Releases selon le plugin. Les checksums sont vérifiés quand la source les fournit. Si un plugin est introuvable, le script le signale à la fin sans s'interrompre.
 
@@ -113,6 +117,27 @@ Puis connecte-toi avec l'adresse IP de la VM, sur le port `25565`.
 | État du service | `systemctl status minecraft` |
 | Lire les logs | `tail -f /opt/minecraft/logs/latest.log` |
 | Faire une sauvegarde | `mc-backup` |
+| État complet (TPS, joueurs, disque, sauvegardes, Chunky) | `mc-status` |
+| Qui a cassé ce bloc ? (en jeu) | `/co i` puis clic sur le bloc ; `/co i` pour arrêter |
+| Annuler un grief (admin) | `/co rollback u:Pseudo t:2h r:20` (`/co undo` pour revenir en arrière) |
+
+## Économie de faction
+
+L'économie d'EssentialsX est branchée sur FactionsUUID (`economy.enabled=true` dans `plugins/FactionsUUID/config/main.conf`) :
+
+| Réglage | Valeur |
+|---|---|
+| Solde de départ (`starting-balance`, EssentialsX) | 500 $ |
+| Créer une faction (`costCreate`) | 200 $ |
+| Claim d'un chunk (`costClaimWilderness`, `claimAdditionalMultiplier`) | 30 $ + 5 % par chunk déjà possédé (le 50ᵉ coûte ~105 $) |
+| Unclaim (`claimRefundMultiplier`) | 70 % remboursés |
+| Loyer des terres (`rentEnabled`) | désactivé (il peut retirer des claims) |
+
+Revenus : `/sell` (prix dans `plugins/Essentials/worth.yml`), `/pay` entre joueurs, 5 000 $ par KOTH gagnée. La banque de faction (`/f money`) paie les claims.
+
+## Anti-cheat (GrimAC)
+
+Grim **alerte et journalise seulement** : aucun kick ni ban automatique, réglage par défaut de `plugins/GrimAC/punishments.yml`. Les modos et admins reçoivent les alertes en jeu (`grim.alerts`). Observe-les quelques jours avant d'ajouter des sanctions : avec les mécaniques 1.8 d'OldCombatMechanics et les vieux clients via ViaVersion, des faux positifs sont possibles. Limite connue signalée par Grim : avec ViaBackwards, les vieux clients peuvent avoir des soucis en véhicule (bateaux, chevaux).
 
 ## Sauvegardes
 
@@ -129,6 +154,16 @@ systemctl start minecraft
 ```
 
 > En complément, une sauvegarde Proxmox de la VM ou du conteneur (vzdump vers un PBS ou un autre stockage) te protège si le disque lâche.
+
+### Alertes Discord et copie hors site
+
+Les archives sont sur le même disque que le monde : si ce disque lâche, tout est perdu. Les scripts suivants se règlent dans `/etc/minecraft-faction.conf` (copie de `config/minecraft-faction.conf`, en `chmod 600` car l'URL du webhook est un secret) :
+
+- `mc-backup-offsite` copie la dernière archive dans `OFFSITE_DIR`, vérifie son empreinte et garde les `OFFSITE_KEEP` dernières. Il refuse un dossier situé sur le même disque que le serveur. Pour monter un disque de l'hôte Proxmox dans le conteneur : `pct set 200 -mp0 /chemin/sur/hote,mp=/mnt/offsite`.
+- `mc-alert ok|warn|crit "Titre" "Détail"` envoie une alerte au webhook Discord `DISCORD_WEBHOOK`, ou seulement au journal système s'il est vide.
+- `mc-watch` vérifie que le serveur tourne, l'espace disque et l'âge des sauvegardes (locales et hors site). Il n'alerte qu'au changement d'état : une alerte quand le problème apparaît, une quand il disparaît.
+
+Ils ne sont pas encore lancés automatiquement : il faut les brancher sur systemd (`ExecStartPost=/usr/local/bin/mc-backup-offsite` dans `minecraft-backup.service`, un timer de 5 minutes pour `mc-watch`, `OnFailure=` pour alerter en cas de crash).
 
 ## Jouer depuis l'extérieur
 
@@ -218,7 +253,9 @@ Plugin maison (`plugins/koth/`), compilé par GitHub Actions et installé automa
 | `/koth list`, `/koth info`, `/koth top` | KOTH existantes, event en cours, classement |
 | `/koth delete <nom>`, `/koth reload` | supprime une KOTH, recharge la config |
 
-Réglages dans `plugins/LifeKoth/config.yml` : durée de capture, horaires, jours, loot, commandes de récompense.
+Réglages dans `plugins/LifeKoth/config.yml` : durée de capture, horaires, jours, loot, commandes de récompense. Avec FactionsUUID 4.x, les commandes d'admin sont sous `/fa` : la récompense de power s'écrit `fa power boost modify faction {faction} 5`.
+
+**Arène « Colline »** : dans la warzone, à 35 blocs au nord de l'arche du spawn (77, 65, -2180). Plateforme de 17×17, zone de capture de 7×7 bordée d'or, balise au centre dont le faisceau jaune se voit de loin. Le coffre de loot apparaît sur le socle en verre. Étant en warzone, personne ne peut la claim, y construire ou y poser de la TNT.
 
 ## Arborescence du dépôt
 
@@ -228,7 +265,14 @@ config/server.properties   Configuration de départ du serveur
 config/ops.json.example    Exemple de fichier d'opérateurs
 scripts/mc-console         Ouvre la console (tmux)
 scripts/mc-cmd             Envoie une commande au serveur
-scripts/mc-backup          Sauvegarde avec rotation
+scripts/mc-backup          Sauvegarde avec rotation et contrôle de l'espace disque
+scripts/mc-status          État du serveur en une commande
+scripts/mc-alert           Alerte Discord (webhook) et journal système
+scripts/mc-watch           Surveillance : serveur, disque, fraîcheur des sauvegardes
+scripts/mc-backup-offsite  Copie vérifiée de la dernière sauvegarde vers un autre disque
+config/minecraft-faction.conf  Webhook Discord, dossier hors site, seuils
+config/essentials/         Kits, MOTD et règlement en français
+plugins/koth/              Plugin LifeKoth
 ```
 
 ## Prochaines étapes

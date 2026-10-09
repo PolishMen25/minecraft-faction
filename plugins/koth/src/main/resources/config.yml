@@ -28,9 +28,10 @@ rewards:
   # Commandes exécutées par la console pour le gagnant.
   # {player} = joueur de la faction gagnante présent dans la zone, {faction} = nom de la faction.
   # Les commandes contenant {faction} sont ignorées si le gagnant n'a pas de faction.
+  # FactionsUUID 4.x : les commandes d'admin sont sous /fa (ex. /fa power boost modify faction <faction> <valeur>).
   commands:
     - "eco give {player} 5000"
-    - "f powerboost f {faction} 5"
+    - "fa power boost modify faction {faction} 5"
   # Coffre de loot posé au-dessus du centre : MATERIAU:quantité[:enchant=niveau,enchant=niveau]
   loot-chest: true
   loot:

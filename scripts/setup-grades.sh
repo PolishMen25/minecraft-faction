@@ -50,7 +50,11 @@ perms modo \
   essentials.jail essentials.togglejail essentials.vanish essentials.invsee \
   essentials.tp essentials.tphere essentials.seen essentials.whois essentials.socialspy \
   essentials.sethome.multiple.staff essentials.chat.url \
-  minecraft.command.whitelist
+  minecraft.command.whitelist \
+  grim.alerts grim.alerts.enable-on-join \
+  coreprotect.inspect coreprotect.lookup coreprotect.lookup.block coreprotect.lookup.chat \
+  coreprotect.lookup.command coreprotect.lookup.container coreprotect.lookup.session \
+  coreprotect.lookup.sign coreprotect.lookup.kill
 
 echo "Permissions Admin..."
 lp group admin permission set '*' true
