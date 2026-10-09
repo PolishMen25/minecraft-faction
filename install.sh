@@ -7,17 +7,17 @@
 #  seuls le jar Paper et les plugins sont remis à jour.
 #
 #  Variables surchargeables :
-#    MC_VERSION=26.2   version Minecraft/Paper
+#    MC_VERSION=26.1.2 version Minecraft/Paper
 #    RAM=5G            mémoire allouée à la JVM (Xms = Xmx)
 #    JAVA_VERSION=25   version de Java (Temurin)
 #    MC_DIR=/opt/minecraft
 #    EULA=true         accepte l'EULA Mojang sans poser la question
 #
-#  Exemple : MC_VERSION=26.2 RAM=6G ./install.sh
+#  Exemple : MC_VERSION=26.1.2 RAM=6G ./install.sh
 # =============================================================================
 set -euo pipefail
 
-MC_VERSION="${MC_VERSION:-26.2}"
+MC_VERSION="${MC_VERSION:-26.1.2}"
 RAM="${RAM:-5G}"
 JAVA_VERSION="${JAVA_VERSION:-25}"
 MC_DIR="${MC_DIR:-/opt/minecraft}"
@@ -26,19 +26,20 @@ SERVICE="minecraft"
 UA="minecraft-faction-kit/1.0 (github.com/PolishMen25/minecraft-faction)"
 KIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Plugins : nom | slug Modrinth | dépôt GitHub (repli) | regex du jar GitHub
-# Laisser un champ vide pour ignorer cette source.
+# Plugins : nom | slug Modrinth | projet Hangar | dépôt GitHub | regex du jar GitHub | page de téléchargement manuel
+# Les sources sont essayées dans cet ordre ; laisser un champ vide pour l'ignorer.
 PLUGINS=(
-  "ViaVersion|viaversion|ViaVersion/ViaVersion|^ViaVersion-[0-9.]+\.jar$"
-  "ViaBackwards|viabackwards|ViaVersion/ViaBackwards|^ViaBackwards-[0-9.]+\.jar$"
-  "ViaRewind|viarewind|ViaVersion/ViaRewind|^ViaRewind-[0-9.]+\.jar$"
-  "OldCombatMechanics|oldcombatmechanics|kernitus/OldCombatMechanics|^OldCombatMechanics.*\.jar$"
-  "LuckPerms|luckperms||"
-  "Vault||MilkBowl/Vault|^Vault\.jar$"
-  "EssentialsX||EssentialsX/Essentials|^EssentialsX-[0-9][^-]*\.jar$"
-  "EssentialsXSpawn||EssentialsX/Essentials|^EssentialsXSpawn-.*\.jar$"
-  "EssentialsXChat||EssentialsX/Essentials|^EssentialsXChat-.*\.jar$"
-  "FactionsUUID|factionsuuid|drtshock/Factions|^Factions.*\.jar$"
+  "ViaVersion|viaversion||ViaVersion/ViaVersion|^ViaVersion-[0-9.]+\.jar$|"
+  "ViaBackwards|viabackwards||ViaVersion/ViaBackwards|^ViaBackwards-[0-9.]+\.jar$|"
+  "ViaRewind|viarewind||ViaVersion/ViaRewind|^ViaRewind-[0-9.]+\.jar$|"
+  "OldCombatMechanics||OldCombatMechanics|kernitus/OldCombatMechanics|^OldCombatMechanics.*\.jar$|https://hangar.papermc.io/kernitus/OldCombatMechanics"
+  "LuckPerms|luckperms||||"
+  "Vault|||MilkBowl/Vault|^Vault\.jar$|"
+  "EssentialsX|||EssentialsX/Essentials|^EssentialsX-[0-9][^-]*\.jar$|"
+  "EssentialsXSpawn|||EssentialsX/Essentials|^EssentialsXSpawn-.*\.jar$|"
+  "EssentialsXChat|||EssentialsX/Essentials|^EssentialsXChat-.*\.jar$|"
+  # Publié uniquement sur SpigotMC, qui bloque les téléchargements automatiques
+  "FactionsUUID|||||https://www.spigotmc.org/resources/factionsuuid.1035/"
 )
 
 # ----------------------------------------------------------------------------
@@ -109,7 +110,7 @@ fi
 # ----------------------------------------------------------------------------
 # 4. Plugins (Modrinth en priorité, GitHub Releases en repli)
 # ----------------------------------------------------------------------------
-# Renvoie "url sha512" du jar Modrinth le plus récent compatible, ou rien.
+# Chaque source renvoie "url algo:hash" (hash vide si inconnu), ou rien.
 modrinth_latest() {
   local slug="$1" gv="$2" json
   json="$(curl -fsSL -A "$UA" -G "https://api.modrinth.com/v2/project/${slug}/version" \
@@ -117,34 +118,50 @@ modrinth_latest() {
       ${gv:+--data-urlencode "game_versions=[\"$gv\"]"} 2>/dev/null)" || return 0
   jq -r 'map(select(.version_type == "release")) + map(select(.version_type != "release"))
          | .[0].files // [] | (map(select(.primary)) + .)[0] // empty
-         | "\(.url) \(.hashes.sha512)"' <<<"$json"
+         | "\(.url) sha512:\(.hashes.sha512 // "")"' <<<"$json"
+}
+
+# Hangar : préfère la version la plus récente qui déclare MC_VERSION, sinon la plus récente tout court
+hangar_latest() {
+  local slug="$1" mcv="$2" json
+  json="$(curl -fsSL -A "$UA" -G "https://hangar.papermc.io/api/v1/projects/${slug}/versions" \
+      --data-urlencode limit=25 --data-urlencode platform=PAPER 2>/dev/null)" || return 0
+  jq -r --arg v "$mcv" '
+    .result // [] | (map(select((.platformDependencies.PAPER // []) | index($v))) + .)[0] // empty
+    | .downloads.PAPER // empty
+    | "\(.downloadUrl // .externalUrl // empty) sha256:\(.fileInfo.sha256Hash // "")"' <<<"$json"
 }
 
 github_latest() {
   local repo="$1" regex="$2"
   curl -fsSL -A "$UA" "https://api.github.com/repos/${repo}/releases/latest" 2>/dev/null \
-    | jq -r --arg re "$regex" '.assets[] | select(.name | test($re)) | .browser_download_url' \
-    | head -1
+    | jq -r --arg re "$regex" '[.assets[] | select(.name | test($re)) | .browser_download_url][0] // empty
+                               | "\(.) "'
 }
 
 FAILED=()
+MANUAL=()
 for entry in "${PLUGINS[@]}"; do
-  IFS='|' read -r name slug repo regex <<<"$entry"
-  url="" sha=""
+  IFS='|' read -r name slug hangar repo regex manual <<<"$entry"
+  found=""
   if [[ -n "$slug" ]]; then
-    read -r url sha < <(modrinth_latest "$slug" "$MC_VERSION"; echo) || true
-    if [[ -z "$url" ]]; then
-      read -r url sha < <(modrinth_latest "$slug" ""; echo) || true
-      [[ -n "$url" ]] && c_warn "$name : pas de version marquée ${MC_VERSION} sur Modrinth, prise de la plus récente."
+    found="$(modrinth_latest "$slug" "$MC_VERSION")"
+    if [[ -z "$found" ]]; then
+      found="$(modrinth_latest "$slug" "")"
+      [[ -n "$found" ]] && c_warn "$name : pas de version marquée ${MC_VERSION} sur Modrinth, prise de la plus récente."
     fi
   fi
-  if [[ -z "$url" && -n "$repo" ]]; then
-    url="$(github_latest "$repo" "$regex" || true)"
-    sha=""
-  fi
+  [[ -z "$found" && -n "$hangar" ]] && found="$(hangar_latest "$hangar" "$MC_VERSION")"
+  [[ -z "$found" && -n "$repo"   ]] && found="$(github_latest "$repo" "$regex")"
+  read -r url hash <<<"$found" || true
+
   if [[ -z "$url" ]]; then
-    c_warn "$name : introuvable automatiquement, à installer à la main dans $MC_DIR/plugins/"
-    FAILED+=("$name")
+    if [[ -f "$MC_DIR/plugins/${name}.jar" ]]; then
+      c_info "$name : pas de téléchargement automatique, le jar déjà présent est conservé."
+    else
+      c_warn "$name : à télécharger à la main${manual:+ sur $manual}"
+      FAILED+=("$name"); MANUAL+=("$name.jar ← ${manual:-recherche manuelle}")
+    fi
     continue
   fi
 
@@ -152,7 +169,8 @@ for entry in "${PLUGINS[@]}"; do
   if ! curl -fsSL -A "$UA" -o "$tmp" "$url"; then
     c_warn "$name : échec du téléchargement ($url)"; FAILED+=("$name"); rm -f "$tmp"; continue
   fi
-  if [[ -n "$sha" && "$sha" != "null" ]] && ! echo "$sha  $tmp" | sha512sum -c --status; then
+  algo="${hash%%:*}" sum="${hash#*:}"
+  if [[ -n "$sum" && "$sum" != "null" ]] && ! echo "$sum  $tmp" | "${algo}sum" -c --status; then
     c_warn "$name : checksum invalide, ignoré."; FAILED+=("$name"); rm -f "$tmp"; continue
   fi
   # Nom fixe par plugin : une mise à jour remplace simplement l'ancien jar
@@ -279,5 +297,7 @@ echo "  Sauvegarde manuelle : mc-backup"
 echo
 if ((${#FAILED[@]})); then
   c_warn "Plugins à installer à la main : ${FAILED[*]}"
-  echo "     Dépose les .jar dans $MC_DIR/plugins/ puis : systemctl restart $SERVICE"
+  for m in "${MANUAL[@]}"; do echo "     - $m"; done
+  echo "     Dépose les .jar dans $MC_DIR/plugins/ (sous ce nom), puis :"
+  echo "     chown $MC_USER:$MC_USER $MC_DIR/plugins/*.jar && systemctl restart $SERVICE"
 fi

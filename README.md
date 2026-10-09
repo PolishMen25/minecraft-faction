@@ -2,7 +2,7 @@
 
 Kit d'installation d'un serveur **Minecraft PvP Faction**, inspiré de LifeCraft, pour jouer entre potes sur un cluster Proxmox.
 
-- **Serveur** : Paper 26.2 (version récente, performante et maintenue)
+- **Serveur** : Paper 26.1.2 (dernière version supportée à la fois par FactionsUUID, OldCombatMechanics et EssentialsX)
 - **Combat** : PvP 1.8 (pas de cooldown d'attaque, blocage à l'épée, etc.) grâce à OldCombatMechanics
 - **Clients acceptés** : de la 1.8 à la dernière version, via ViaVersion, ViaBackwards et ViaRewind
 - **Accès** : whitelist activée, seuls les joueurs ajoutés peuvent se connecter
@@ -18,7 +18,24 @@ Kit d'installation d'un serveur **Minecraft PvP Faction**, inspiré de LifeCraft
 | LuckPerms | Grades et permissions |
 | Vault | Lien entre l'économie et les permissions |
 
-`install.sh` récupère **la dernière version de chaque plugin au moment où il tourne** : via Modrinth en priorité, sinon via GitHub Releases. Les checksums sont vérifiés quand la source les fournit. Si un plugin est introuvable, le script le signale à la fin sans s'interrompre.
+`install.sh` récupère **la dernière version de chaque plugin au moment où il tourne** : via Modrinth, Hangar ou GitHub Releases selon le plugin. Les checksums sont vérifiés quand la source les fournit. Si un plugin est introuvable, le script le signale à la fin sans s'interrompre.
+
+### FactionsUUID : téléchargement manuel
+
+FactionsUUID n'est publié que sur SpigotMC, qui bloque les téléchargements automatiques. Il faut donc le récupérer une fois à la main :
+
+1. Sur ton PC, télécharge la version « modern » sur https://www.spigotmc.org/resources/factionsuuid.1035/ (il faut un compte SpigotMC gratuit).
+2. Envoie-le dans le conteneur sous le nom `FactionsUUID.jar`, par exemple depuis l'hôte Proxmox :
+   ```bash
+   pct push 200 FactionsUUID-x.y.z.jar /opt/minecraft/plugins/FactionsUUID.jar
+   ```
+3. Dans le conteneur :
+   ```bash
+   chown minecraft:minecraft /opt/minecraft/plugins/FactionsUUID.jar
+   systemctl restart minecraft
+   ```
+
+Les relances suivantes de `install.sh` conservent ce jar ; pour le mettre à jour, remplace-le de la même façon.
 
 ## Prérequis
 
@@ -44,12 +61,12 @@ cd minecraft-faction
 Tu peux changer les réglages en les passant devant la commande :
 
 ```bash
-RAM=6G MC_VERSION=26.2 ./install.sh
+RAM=6G MC_VERSION=26.1.2 ./install.sh
 ```
 
 | Variable | Défaut | Rôle |
 |---|---|---|
-| `MC_VERSION` | `26.2` | Version de Paper / Minecraft |
+| `MC_VERSION` | `26.1.2` | Version de Paper / Minecraft. Ne la monte que quand tous les plugins supportent la nouvelle version |
 | `RAM` | `5G` | Mémoire allouée à Java |
 | `JAVA_VERSION` | `25` | Version de Java (Temurin) |
 | `MC_DIR` | `/opt/minecraft` | Dossier du serveur |
@@ -83,7 +100,7 @@ mc-cmd "op TonPseudo"
 
 Puis connecte-toi avec l'adresse IP de la VM, sur le port `25565`.
 
-> 📋 **Envoie-moi ce log de premier démarrage** : il permet de vérifier que tous les plugins se chargent bien en 26.2. EssentialsX en particulier n'est annoncé compatible que jusqu'à la 26.1.2.
+> 📋 **Envoie-moi ce log de premier démarrage** : il permet de vérifier que tous les plugins se chargent bien.
 
 ## Administration au quotidien
 
