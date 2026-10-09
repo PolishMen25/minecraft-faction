@@ -233,9 +233,11 @@ chmod 0755 "$MC_DIR/start.sh"
 chown "$MC_USER:$MC_USER" "$MC_DIR/start.sh"
 
 # Outils d'administration
-install -m 0755 "$KIT_DIR/scripts/mc-console" /usr/local/bin/mc-console
-install -m 0755 "$KIT_DIR/scripts/mc-cmd"     /usr/local/bin/mc-cmd
-install -m 0755 "$KIT_DIR/scripts/mc-backup"  /usr/local/bin/mc-backup
+# Lien dans /usr/bin : le shell ouvert par « pct enter » n'a pas /usr/local/bin dans son PATH
+for tool in mc-console mc-cmd mc-backup; do
+  install -m 0755 "$KIT_DIR/scripts/$tool" "/usr/local/bin/$tool"
+  ln -sf "/usr/local/bin/$tool" "/usr/bin/$tool"
+done
 
 # ----------------------------------------------------------------------------
 # 6. Services systemd (serveur + sauvegarde quotidienne)
