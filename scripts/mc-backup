@@ -7,9 +7,9 @@ KEEP="${KEEP:-7}"
 DEST="$MC_DIR/backups"
 STAMP="$(date +%Y-%m-%d_%H-%M)"
 
-cmd() { sudo -u minecraft tmux send-keys -t mc "$*" Enter 2>/dev/null || true; }
+cmd() { runuser -u minecraft -- tmux send-keys -t mc "$*" Enter 2>/dev/null || true; }
 running=false
-sudo -u minecraft tmux has-session -t mc 2>/dev/null && running=true
+runuser -u minecraft -- tmux has-session -t mc 2>/dev/null && running=true
 
 if $running; then
   cmd "say Sauvegarde en cours..."
