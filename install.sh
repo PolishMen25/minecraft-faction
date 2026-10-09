@@ -209,16 +209,25 @@ fi
 # preferIPv4Stack : sans accès IPv6 (cas courant en LXC), Java reste bloqué sur les
 # résolutions AAAA vers Mojang (whitelist, connexion des joueurs).
 # G1RSetUpdatingPauseIntervalMillis, présent dans les flags Aikar d'origine, n'existe plus depuis Java 20.
+# Au-delà de 12 Go, Aikar recommande des valeurs G1 différentes (régions et jeune génération plus grandes)
+ram_gb="${RAM%[Gg]}"
+if [[ "$ram_gb" =~ ^[0-9]+$ ]] && (( ram_gb >= 12 )); then
+  G1_TUNING="-XX:G1NewSizePercent=40 -XX:G1MaxNewSizePercent=50 -XX:G1HeapRegionSize=16M \
+-XX:G1ReservePercent=15 -XX:InitiatingHeapOccupancyPercent=20"
+else
+  G1_TUNING="-XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M \
+-XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15"
+fi
 JVM_FLAGS="-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \
 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch \
--XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M \
--XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 \
--XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 \
+$G1_TUNING -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 \
+-XX:G1MixedGCLiveThresholdPercent=90 \
 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1"
 
-# Vérifie que Java accepte ces options avant de les écrire (sans pré-allouer la RAM)
+# Vérifie que Java accepte ces options avant de les écrire. -Xms réduit : rien n'est alloué,
+# la vérification passe même quand le serveur tourne déjà avec toute la RAM.
 # shellcheck disable=SC2086
-if ! jvm_err="$("$JAVA_BIN" -Xms${RAM} -Xmx${RAM} ${JVM_FLAGS/-XX:+AlwaysPreTouch/} -version 2>&1)"; then
+if ! jvm_err="$("$JAVA_BIN" -Xms256m -Xmx${RAM} ${JVM_FLAGS/-XX:+AlwaysPreTouch/} -version 2>&1)"; then
   die "Java refuse les options de lancement :
 $jvm_err"
 fi
