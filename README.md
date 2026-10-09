@@ -152,8 +152,14 @@ Le dossier `spawn/` contient un spawn médiéval de 64 × 64 blocs, généré pa
    /place template lifecraft:spawn_medieval ~-32 ~-11 ~-32
    ```
    Pas besoin de terrain plat : le spawn est centré sur toi, sa fondation comble les creux jusqu'à 10 blocs sous le sol, et tout le relief jusqu'à 30 blocs au-dessus est rasé sur 64 × 64. Au-delà (falaise, ravin), retouche les bords à la main.
-4. Monte sur la fontaine (au centre exact) et protège la zone : `/f warzone 6` puis `/f safezone 2`.
-5. Va sur la place, devant la fontaine, et définis le point d'apparition : `/setworldspawn` puis `/setspawn`.
+4. Protège la zone (syntaxe FactionsUUID 4.x : les anciennes commandes `/f warzone` et `/f safezone` n'existent plus). Place-toi sur la place, juste au sud de la fontaine (le centre exact tombe en bordure de chunk), puis, **dans cet ordre** :
+   ```
+   /f claim --radius 7 --faction warzone
+   /f claim --radius 3 --faction safezone
+   /f map
+   ```
+   Un rayon *n* couvre (2n−1)×(2n−1) chunks : 13×13 de warzone, dont 5×5 de safezone au centre (qui couvre tout le spawn). La warzone d'abord, sinon elle écraserait la safezone. Ces commandes ne marchent qu'en jeu.
+5. Va sur la place, devant la fontaine, et définis le point d'apparition : `/setworldspawn` puis `/setspawn`. Mets aussi `/gamerule respawn_radius 0`, sinon les joueurs apparaissent au hasard dans un rayon de 10 blocs (parfois sur la fontaine).
 
 Pour modifier le spawn, édite `generate_spawn.py` puis relance `python3 spawn/generate_spawn.py` (Pillow requis pour l'aperçu).
 
@@ -163,7 +169,7 @@ Pour modifier le spawn, édite `generate_spawn.py` puis relance `python3 spawn/g
 
 | Grade | Préfixe | Permissions principales |
 |---|---|---|
-| Joueur (`default`) | `[Joueur]` | /spawn, /home, /sethome, /tpa, /msg, /warp, /kit starter, /kit pvp, /pay, /bal |
+| Joueur (`default`) | `[Joueur]` | /spawn, /home, /sethome, /tpa, /msg, /warp, /kit starter, /kit pvp, /kit quotidien, /pay, /bal |
 | VIP | `[VIP]` | + /kit vip, plusieurs homes, /craft, /ec, /hat, /nick, couleurs dans le chat |
 | Modo | `[Modo]` | + /kick, /mute, /ban, /tempban, /jail, /vanish, /invsee, /tp, /whitelist |
 | Admin | `[Admin]` | toutes les permissions |
@@ -181,14 +187,16 @@ Au-delà de 12 Go (`RAM=16G ./install.sh`), le script applique automatiquement l
 
 Trois leviers, du plus efficace au moins efficace :
 
-1. **Pré-générer la carte avec Chunky** (installé par le script). Les chunks sont alors seulement lus sur le SSD au lieu d'être générés quand un joueur arrive. En console :
+1. **Pré-générer la carte avec Chunky** (installé par le script). Les chunks sont alors seulement lus sur le SSD au lieu d'être générés quand un joueur arrive. En console, en remplaçant `X Z` par les coordonnées du spawn :
    ```
-   worldborder center 0 0
+   worldborder center X Z
    worldborder set 10000
+   chunky world world
+   chunky center X Z
    chunky radius 5000
    chunky start
    ```
-   `chunky progress` affiche l'avancement. Fais pareil dans le Nether (`chunky world world_nether`, rayon plus petit).
+   Règle le centre **avant** `chunky start` : changer le centre d'une tâche déjà lancée n'a aucun effet (il faut `chunky cancel` puis relancer). `chunky progress` affiche l'avancement. Pour le Nether, divise par 8 (`execute in minecraft:the_nether run worldborder ...`, centre X/8 Z/8, taille 1250, puis `chunky world world_nether`, rayon 625).
 2. **Donner beaucoup de RAM au conteneur, mais pas à Java** : la RAM du conteneur au-delà du tas Java sert de cache disque à Linux. Les fichiers de région déjà lus restent en mémoire, et les chunks se chargent depuis la RAM.
 3. **Tous les cœurs CPU au conteneur** : Paper génère et charge les chunks sur plusieurs threads.
 

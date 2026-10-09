@@ -196,6 +196,11 @@ copy_if_absent() {
 }
 copy_if_absent "$KIT_DIR/config/server.properties" "$MC_DIR/server.properties"
 copy_if_absent "$KIT_DIR/config/ops.json.example"   "$MC_DIR/ops.json.example"
+# Kits, MOTD et règlement EssentialsX en français (seulement à la première installation)
+install -d -o "$MC_USER" -g "$MC_USER" "$MC_DIR/plugins" "$MC_DIR/plugins/Essentials"
+for f in kits.yml motd.txt rules.txt; do
+  copy_if_absent "$KIT_DIR/config/essentials/$f" "$MC_DIR/plugins/Essentials/$f"
+done
 
 if [[ ! -f "$MC_DIR/eula.txt" ]] || ! grep -q '^eula=true' "$MC_DIR/eula.txt"; then
   if [[ "${EULA:-}" != "true" ]]; then
@@ -249,7 +254,7 @@ chown "$MC_USER:$MC_USER" "$MC_DIR/start.sh"
 
 # Outils d'administration
 # Lien dans /usr/bin : le shell ouvert par « pct enter » n'a pas /usr/local/bin dans son PATH
-for tool in mc-console mc-cmd mc-backup; do
+for tool in mc-console mc-cmd mc-backup mc-status; do
   install -m 0755 "$KIT_DIR/scripts/$tool" "/usr/local/bin/$tool"
   ln -sf "/usr/local/bin/$tool" "/usr/bin/$tool"
 done
@@ -320,6 +325,7 @@ echo "  Console du serveur  : mc-console      (quitter sans arrêter : Ctrl+B pu
 echo "  Commande ponctuelle : mc-cmd \"whitelist add Pseudo\""
 echo "  Logs                : tail -f $MC_DIR/logs/latest.log"
 echo "  Sauvegarde manuelle : mc-backup"
+echo "  État du serveur     : mc-status"
 echo
 if ((${#FAILED[@]})); then
   c_warn "Plugins à installer à la main : ${FAILED[*]}"
