@@ -35,6 +35,8 @@ PLUGINS=(
   "OldCombatMechanics||OldCombatMechanics|kernitus/OldCombatMechanics|^OldCombatMechanics.*\.jar$|https://hangar.papermc.io/kernitus/OldCombatMechanics"
   "LuckPerms|luckperms||||"
   "Chunky|chunky|Chunky|||"
+  # Plugin KOTH du kit, compilé par GitHub Actions (plugins/koth)
+  "LifeKoth|||PolishMen25/minecraft-faction|^LifeKoth.*\.jar$|"
   "Vault|||MilkBowl/Vault|^Vault\.jar$|"
   "EssentialsX|||EssentialsX/Essentials|^EssentialsX-[0-9][^-]*\.jar$|"
   "EssentialsXSpawn|||EssentialsX/Essentials|^EssentialsXSpawn-.*\.jar$|"
