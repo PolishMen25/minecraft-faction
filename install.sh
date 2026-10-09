@@ -206,17 +206,26 @@ if [[ ! -f "$MC_DIR/eula.txt" ]] || ! grep -q '^eula=true' "$MC_DIR/eula.txt"; t
 fi
 
 # Script de lancement (flags Aikar, régénéré à chaque installation pour suivre RAM)
+# G1RSetUpdatingPauseIntervalMillis, présent dans les flags Aikar d'origine, n'existe plus depuis Java 20.
+JVM_FLAGS="-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \
+-XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch \
+-XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M \
+-XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 \
+-XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 \
+-XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1"
+
+# Vérifie que Java accepte ces options avant de les écrire (sans pré-allouer la RAM)
+# shellcheck disable=SC2086
+if ! jvm_err="$("$JAVA_BIN" -Xms${RAM} -Xmx${RAM} ${JVM_FLAGS/-XX:+AlwaysPreTouch/} -version 2>&1)"; then
+  die "Java refuse les options de lancement :
+$jvm_err"
+fi
+
 cat > "$MC_DIR/start.sh" <<EOF
 #!/usr/bin/env bash
 cd "$MC_DIR"
 exec "$JAVA_BIN" -Xms${RAM} -Xmx${RAM} \\
-  -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \\
-  -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch \\
-  -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M \\
-  -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 \\
-  -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 \\
-  -XX:G1RSetUpdatingPauseIntervalMillis=0 -XX:SurvivorRatio=32 \\
-  -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 \\
+  $JVM_FLAGS \\
   -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true \\
   -jar paper.jar --nogui
 EOF
