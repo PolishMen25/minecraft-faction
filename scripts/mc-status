@@ -68,5 +68,9 @@ for w in world world_nether world_the_end; do
   fi
 done
 
-errors=$(grep -cE "/(ERROR|SEVERE)\]" "$LOG")
+# "Detected unsafe terrain read during worldgen" : diagnostic de Paper sur une structure
+# vanilla (sculk du deep dark) pendant la génération, sans conséquence : compté à part.
+errors=$(grep -E "/(ERROR|SEVERE)\]" "$LOG" | grep -vc "unsafe terrain read")
+worldgen=$(grep -c "unsafe terrain read" "$LOG")
 row "Erreurs (log)" "$( (( errors > 0 )) && echo "${y}$errors${n} ${d}(grep ERROR $LOG)${n}" || echo "${g}0${n}")"
+if (( worldgen > 0 )); then row "" "${d}+ $worldgen avertissements de génération Paper (sans gravité)${n}"; fi
