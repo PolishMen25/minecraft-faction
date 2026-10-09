@@ -10,4 +10,4 @@ for sub in structures structure; do
   install -D -o minecraft -g minecraft -m 0644 "$SRC" "$MC_DIR/world/generated/lifecraft/$sub/spawn_medieval.nbt"
 done
 echo "Structure installée. En jeu, debout au centre de l'emplacement voulu :"
-echo "  /place template lifecraft:spawn_medieval ~-32 ~-5 ~-32"
+echo "  /place template lifecraft:spawn_medieval ~-32 ~-11 ~-32"

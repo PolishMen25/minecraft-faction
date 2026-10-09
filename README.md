@@ -147,11 +147,11 @@ Le dossier `spawn/` contient un spawn médiéval de 64 × 64 blocs, généré pa
 **Installation**
 1. Fais une sauvegarde : `mc-backup`.
 2. Dans le conteneur : `cd ~/minecraft-faction && git pull && ./spawn/install-spawn.sh`
-3. En jeu, choisis un terrain plutôt plat et place-toi au centre, les pieds sur le sol, puis :
+3. En jeu, place-toi au centre de l'emplacement voulu, les pieds sur le sol, puis :
    ```
-   /place template lifecraft:spawn_medieval ~-32 ~-5 ~-32
+   /place template lifecraft:spawn_medieval ~-32 ~-11 ~-32
    ```
-   Le spawn est centré sur toi, son sol remplace le niveau du terrain et tout ce qui dépasse dans le volume de 64 × 64 × 19 au-dessus est dégagé.
+   Pas besoin de terrain plat : le spawn est centré sur toi, sa fondation comble les creux jusqu'à 10 blocs sous le sol, et tout le relief jusqu'à 30 blocs au-dessus est rasé sur 64 × 64. Au-delà (falaise, ravin), retouche les bords à la main.
 4. Monte sur la fontaine (au centre exact) et protège la zone : `/f warzone 6` puis `/f safezone 2`.
 5. Va sur la place, devant la fontaine, et définis le point d'apparition : `/setworldspawn` puis `/setspawn`.
 

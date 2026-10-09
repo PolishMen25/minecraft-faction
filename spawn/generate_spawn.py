@@ -15,8 +15,10 @@ import random
 import struct
 from pathlib import Path
 
-SIZE_X, SIZE_Y, SIZE_Z = 64, 24, 64
-GROUND = 4                      # couche du sol (y local) ; 0..3 = fondations
+SIZE_X, SIZE_Y, SIZE_Z = 64, 41, 64
+# Fondation épaisse et grand volume dégagé : le spawn se pose sur un terrain en pente,
+# il comble les creux jusqu'à GROUND blocs sous le sol et rase le relief au-dessus.
+GROUND = 10                     # couche du sol (y local) ; 0..GROUND-1 = fondations
 C = 31.5                        # centre de la place
 # DataVersion 1.21 : le jeu met la structure à niveau automatiquement (DataFixer)
 DATA_VERSION = 3953
@@ -95,8 +97,8 @@ def in_path(x, z):
 
 for x in range(SIZE_X):
     for z in range(SIZE_Z):
-        P(x, 0, z, "stone"); P(x, 1, z, "stone")
-        P(x, 2, z, "dirt"); P(x, 3, z, "dirt")
+        for y in range(GROUND):
+            P(x, y, z, "dirt" if y >= GROUND - 3 else "stone")
         P(x, GROUND, z, "grass_block", {"snowy": "false"})
 
 for x in range(SIZE_X):
@@ -386,16 +388,18 @@ SMALL = ("lantern", "fence", "short_grass", "poppy", "dandelion", "cornflower", 
 def render_preview(path, s=7):
     from PIL import Image, ImageDraw
     w = (SIZE_X + SIZE_Z) * s + 40
-    h = (SIZE_X + SIZE_Z) * s // 2 + SIZE_Y * s + 40
+    ymax = max(y for (x, y, z), (n, _) in grid.items() if n != "minecraft:air")
+    y0 = GROUND - 3
+    h = (SIZE_X + SIZE_Z) * s // 2 + (ymax + 1 - y0) * s + 40
     img = Image.new("RGB", (w, h), (24, 26, 33))
     d = ImageDraw.Draw(img)
-    ox, oy = SIZE_Z * s + 20, SIZE_Y * s + 20
+    ox, oy = SIZE_Z * s + 20, (ymax + 1) * s + 20
 
     def shade(c, f):
         return tuple(max(0, min(255, int(v * f))) for v in c)
 
     for sm in range(SIZE_X + SIZE_Z):
-        for y in range(SIZE_Y):
+        for y in range(y0, ymax + 1):
             for x in range(max(0, sm - SIZE_Z + 1), min(SIZE_X, sm + 1)):
                 z = sm - x
                 name, props = grid.get((x, y, z), ("minecraft:air", {}))
