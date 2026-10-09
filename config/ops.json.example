@@ -1,0 +1,8 @@
+[
+  {
+    "uuid": "à remplir automatiquement : utilise plutôt « mc-cmd \"op TonPseudo\" »",
+    "name": "TonPseudo",
+    "level": 4,
+    "bypassesPlayerLimit": true
+  }
+]

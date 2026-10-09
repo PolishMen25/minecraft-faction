@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Sauvegarde les mondes, plugins et configs dans /opt/minecraft/backups.
+# Garde les KEEP dernières archives (7 par défaut).
+set -euo pipefail
+MC_DIR="${MC_DIR:-/opt/minecraft}"
+KEEP="${KEEP:-7}"
+DEST="$MC_DIR/backups"
+STAMP="$(date +%Y-%m-%d_%H-%M)"
+
+cmd() { sudo -u minecraft tmux send-keys -t mc "$*" Enter 2>/dev/null || true; }
+running=false
+sudo -u minecraft tmux has-session -t mc 2>/dev/null && running=true
+
+if $running; then
+  cmd "say Sauvegarde en cours..."
+  cmd "save-off"
+  cmd "save-all flush"
+  sleep 10
+fi
+trap '$running && { cmd "save-on"; cmd "say Sauvegarde terminée."; }' EXIT
+
+cd "$MC_DIR"
+tar --zstd -cf "$DEST/backup_$STAMP.tar.zst" \
+  --exclude='./backups' --exclude='./cache' --exclude='./libraries' \
+  --exclude='./versions' --exclude='./logs' --exclude='*.jar' .
+chown minecraft:minecraft "$DEST/backup_$STAMP.tar.zst"
+
+ls -1t "$DEST"/backup_*.tar.zst | tail -n +$((KEEP + 1)) | xargs -r rm -f
+echo "Sauvegarde : $DEST/backup_$STAMP.tar.zst ($(du -h "$DEST/backup_$STAMP.tar.zst" | cut -f1))"
