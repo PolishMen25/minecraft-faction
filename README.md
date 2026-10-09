@@ -2,7 +2,7 @@
 
 Kit d'installation d'un serveur **Minecraft PvP Faction**, inspiré de LifeCraft, pour jouer entre potes sur un cluster Proxmox.
 
-- **Serveur** : Paper 26.1.2 (dernière version supportée à la fois par FactionsUUID, OldCombatMechanics et EssentialsX)
+- **Serveur** : Paper 26.2 (supportée par FactionsUUID 4.7+ et OldCombatMechanics 2.6.0+)
 - **Combat** : PvP 1.8 (pas de cooldown d'attaque, blocage à l'épée, etc.) grâce à OldCombatMechanics
 - **Clients acceptés** : de la 1.8 à la dernière version, via ViaVersion, ViaBackwards et ViaRewind
 - **Accès** : whitelist activée, seuls les joueurs ajoutés peuvent se connecter
@@ -24,7 +24,7 @@ Kit d'installation d'un serveur **Minecraft PvP Faction**, inspiré de LifeCraft
 
 FactionsUUID n'est publié que sur SpigotMC, qui bloque les téléchargements automatiques. Il faut donc le récupérer une fois à la main :
 
-1. Sur ton PC, télécharge la version « modern » sur https://www.spigotmc.org/resources/factionsuuid.1035/ (il faut un compte SpigotMC gratuit).
+1. Sur ton PC, récupère le jar sur https://www.spigotmc.org/resources/factionsuuid.1035/ (plugin payant depuis la 4.x ; le code reste open source sous GPLv3 sur https://github.com/drtshock/Factions si tu préfères le compiler toi-même).
 2. Envoie-le dans le conteneur sous le nom `FactionsUUID.jar`, par exemple depuis l'hôte Proxmox :
    ```bash
    pct push 200 FactionsUUID-x.y.z.jar /opt/minecraft/plugins/FactionsUUID.jar
@@ -61,12 +61,12 @@ cd minecraft-faction
 Tu peux changer les réglages en les passant devant la commande :
 
 ```bash
-RAM=6G MC_VERSION=26.1.2 ./install.sh
+RAM=6G MC_VERSION=26.2 ./install.sh
 ```
 
 | Variable | Défaut | Rôle |
 |---|---|---|
-| `MC_VERSION` | `26.1.2` | Version de Paper / Minecraft. Ne la monte que quand tous les plugins supportent la nouvelle version |
+| `MC_VERSION` | `26.2` | Version de Paper / Minecraft. Ne la monte que quand tous les plugins supportent la nouvelle version |
 | `RAM` | `5G` | Mémoire allouée à Java |
 | `JAVA_VERSION` | `25` | Version de Java (Temurin) |
 | `MC_DIR` | `/opt/minecraft` | Dossier du serveur |
