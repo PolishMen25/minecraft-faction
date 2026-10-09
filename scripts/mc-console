@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 # Ouvre la console du serveur. Pour en sortir sans l'arrêter : Ctrl+B puis D.
-exec sudo -u minecraft tmux attach -t mc
+exec runuser -u minecraft -- tmux attach -t mc

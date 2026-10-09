@@ -48,7 +48,7 @@ c_info() { printf '\e[36m[..]\e[0m %s\n' "$*"; }
 c_warn() { printf '\e[33m[!!]\e[0m %s\n' "$*"; }
 die()    { printf '\e[31m[ERREUR]\e[0m %s\n' "$*" >&2; exit 1; }
 
-[[ $EUID -eq 0 ]] || die "Lance ce script en root (sudo ./install.sh)."
+[[ $EUID -eq 0 ]] || die "Lance ce script en root (pas de sudo dans un conteneur Debian : connecte-toi en root)."
 [[ -r /etc/debian_version ]] || die "Ce script cible Debian."
 
 # ----------------------------------------------------------------------------
