@@ -360,6 +360,13 @@ FactionsUUID bloque ces actions à la priorité NORMAL ; LifeKoth lève l'annula
 
 Les commandes d'admin demandent la permission `koth.admin` (op par défaut).
 
+## Déploiement groupé
+
+`scripts/deploy-all.sh` applique en un seul redémarrage : sauvegarde, retrait des claims FactionsUUID hors de la warzone prévue, réglages de power pour les raids, installation des jars compilés du dépôt (LifeKoth, LifeCore, LifeItems). Il est idempotent.
+```
+bash ~/minecraft-faction/scripts/deploy-all.sh
+```
+
 ## Arborescence du dépôt
 
 ```
@@ -381,6 +388,6 @@ plugins/koth/              Plugin LifeKoth
 ## Prochaines étapes
 
 - [ ] Vérifier le log du premier démarrage
-- [ ] Régler les raids : explosions TNT et creepers dans les claims, vitesse de remontée de la power, protection du spawn
+- [x] Régler les raids : TNT et creepers autorisés dans les claims (Faction classique), power de départ 5, régénération 1 point / 5 min, vampirisme 0,5 (appliqué par `scripts/deploy-all.sh`)
 - [ ] Créer les grades LuckPerms (joueur, VIP, modo, admin)
 - [ ] Plugins sur mesure façon LifeCraft : minerais, armures, events KOTH
