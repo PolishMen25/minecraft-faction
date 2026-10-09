@@ -408,6 +408,21 @@ Permission `lifeitems.admin` (op par défaut).
 
 **Vente** : EssentialsX identifie les items par matériau (et donnée héritée), pas par NBT/PDC : il est impossible de fixer un prix pour l'Éclat de faille seul. Une ligne `amethyst_shard: 500` dans `plugins/Essentials/worth.yml` vendrait aussi les éclats vanilla (et probablement les éclats de faille au même prix) ; ne rien mettre est le choix sûr. Pour une vente propre, il faudrait une commande dédiée ou une boutique à part (non fournie).
 
+## Boutique (plugin LifeShop)
+
+Plugin maison (`plugins/shop/`, jar `LifeShop-1.0.0.jar`, à copier dans `plugins/`, nécessite Vault et une économie). `/shop` (alias `/boutique`) ouvre un menu de catégories (Blocs, Minerais, Nourriture, Agriculture, Redstone, Raid, Spawners, Divers), chacune paginée ; `/shop <catégorie>` l'ouvre directement. Config commentée : `plugins/LifeShop/config.yml` (titres, icônes, objets, prix, messages, sons), `/shop reload` recharge (permission `lifeshop.admin`, op).
+
+| Clic | Action |
+|---|---|
+| Gauche / Shift + gauche | acheter 1 / une pile (64 ou max de l'objet) |
+| Droit / Shift + droit | vendre 1 / tout ce que le joueur a |
+
+- On ne débite jamais sans donner l'objet : ce qui ne rentre pas dans l'inventaire n'est pas acheté. Les objets custom (tag PDC, nom, lore, enchantements) ne sont jamais vendables ici. Tous les clics et glissés dans les menus sont annulés.
+- Chaque transaction est journalisée dans `plugins/LifeShop/transactions.log` (date, joueur, ACHAT/VENTE, objet, quantité, montant).
+- **Cohérence avec `/sell`** : les prix de vente de la boutique sont ÉGAUX à ceux de `plugins/Essentials/worth.yml` pour les mêmes objets (environ 25 % de l'achat pour les autres). Au chargement, tout objet dont l'achat n'est pas STRICTEMENT supérieur à la vente est ignoré et signalé (sinon boucle d'argent). Si tu modifies `worth.yml`, reporte-le dans le config de la boutique.
+- **Anti-boucle PNJ** : les villageois du spawn échangent des objets contre des émeraudes, et 1 émeraude permet d'obtenir jusqu'à 180 $ via `/sell`. La section `anti-boucle` du config (valeur de l'émeraude, marge 1,2, table objet -> quantité pour 1 émeraude) impose prix d'achat x quantité >= 216 $ pour ces objets, sinon l'objet est ignoré. Poulet cru, porc cru, chair putréfiée, boule d'argile et carotte ne sont pas en boutique. **Ces valeurs doivent suivre les échanges des PNJ (`spawn/generate_spawn_districts.py`, `MERCHANTS`) et `worth.yml`.**
+- Spawners : achat seulement (types et prix dans la catégorie `spawners`).
+
 ## Arborescence du dépôt
 
 ```
@@ -424,6 +439,7 @@ scripts/mc-backup-offsite  Copie vérifiée de la dernière sauvegarde vers un a
 config/minecraft-faction.conf  Webhook Discord, dossier hors site, seuils
 config/essentials/         Kits, MOTD et règlement en français
 plugins/koth/              Plugin LifeKoth
+plugins/shop/              Plugin LifeShop (boutique)
 ```
 
 ## Prochaines étapes

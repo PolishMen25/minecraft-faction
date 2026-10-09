@@ -3,7 +3,7 @@
 #   1. sauvegarde complète (mc-backup) et copie des fichiers modifiés
 #   2. retrait des claims FactionsUUID hors de la warzone prévue (chunks X -33..41, Z -169..-95)
 #   3. réglages de power pour les raids (départ 5, régénération 0.2/min, vampirisme 0.5)
-#   4. installation des plugins compilés du dépôt (LifeKoth, LifeCore, LifeItems) s'ils existent
+#   4. installation des plugins compilés du dépôt (LifeKoth, LifeCore, LifeItems, LifeShop) s'ils existent
 #   5. redémarrage et vérification du démarrage
 # Idempotent : le relancer ne change rien de plus.
 # Usage : bash ~/minecraft-faction/scripts/deploy-all.sh
@@ -59,7 +59,7 @@ EOF
 
 echo "== 5. Plugins"
 OWNER=$(stat -c %U:%G "$MC/plugins")
-for spec in koth:LifeKoth core:LifeCore items:LifeItems; do
+for spec in koth:LifeKoth core:LifeCore items:LifeItems shop:LifeShop; do
     dir=${spec%%:*}; name=${spec##*:}
     jar=$(ls "$REPO/plugins/$dir/target/$name"-*.jar 2>/dev/null | grep -v original | sort -V | tail -1 || true)
     if [ -n "$jar" ]; then

@@ -1,0 +1,294 @@
+# LifeShop : boutique en menus (/shop). Tout est configurable ici ; /shop reload recharge le fichier.
+#
+# RÈGLES DE COHÉRENCE (vérifiées au chargement, tout objet fautif est ignoré et signalé dans la console) :
+#   1. prix d'achat (buy) STRICTEMENT supérieur au prix de vente (sell), sinon boucle d'argent infinie ;
+#   2. anti-boucle PNJ : voir la section « anti-boucle » plus bas.
+# Les prix de vente (sell) des objets présents dans plugins/Essentials/worth.yml sont ÉGAUX à ceux de /sell.
+# Si tu modifies worth.yml, reporte les changements ici (et inversement). Les autres objets ont
+# un prix de vente d'environ 25 % de l'achat. Sans « sell » (ou sell: 0), l'objet est achetable mais pas vendable.
+# Les objets custom (tag PDC, nom ou lore personnalisé, enchantements) ne sont jamais vendables ici.
+
+# --- Menu principal ---
+menu:
+  titre: "&8Boutique"
+  lignes: 4              # 1 à 6
+  remplissage: BLACK_STAINED_GLASS_PANE   # vitre de décor (AIR pour désactiver)
+  slot-solde: 31         # emplacement de l'indicateur de solde (-1 pour masquer)
+  titre-categorie: "&8Boutique : {categorie} &7({page}/{pages})"
+
+# --- Son (nom du son Bukkit/Minecraft, ex. ENTITY_EXPERIENCE_ORB_PICKUP ; vide pour couper) ---
+sons:
+  succes: ENTITY_EXPERIENCE_ORB_PICKUP
+  erreur: ENTITY_VILLAGER_NO
+  navigation: UI_BUTTON_CLICK
+
+# --- Textes de l'item (placeholders : {achat} {vente} {pile}) ---
+lore:
+  achat: "&7Achat : &a{achat}"
+  vente: "&7Vente : &c{vente}"
+  non-vendable: "&7Vente : &8non vendable"
+  aide:
+    - ""
+    - "&eClic gauche &7: acheter 1"
+    - "&eShift + clic gauche &7: acheter {pile}"
+    - "&eClic droit &7: vendre 1"
+    - "&eShift + clic droit &7: tout vendre"
+
+# --- Messages (placeholders : {objet} {quantite} {montant} {solde} {demande}) ---
+messages:
+  prefixe: "&6[Boutique] &r"
+  achat-ok: "&aAchat : &f{quantite}x {objet} &apour &f{montant}&a."
+  achat-partiel: "&7Inventaire presque plein : {quantite} au lieu de {demande}."
+  vente-ok: "&aVente : &f{quantite}x {objet} &apour &f{montant}&a."
+  pas-assez-argent: "&cIl te faut {montant} (solde : {solde})."
+  inventaire-plein: "&cTon inventaire est plein."
+  rien-a-vendre: "&cTu n'as aucun {objet} vendable (les objets nommés ou custom sont refusés)."
+  non-vendable: "&cCet objet n'est pas vendable."
+  economie-absente: "&cL'économie est indisponible."
+  erreur-economie: "&cTransaction refusée par l'économie, rien n'a été débité."
+  reload-ok: "&aConfiguration rechargée ({objets} objets, {ignores} ignorés)."
+  pas-permission: "&cTu n'as pas la permission."
+  joueur-seulement: "Commande réservée aux joueurs."
+  categorie-inconnue: "&cCatégorie inconnue."
+
+# --- Anti-boucle PNJ ---
+# Les villageois du spawn donnent 1 émeraude contre N objets (voir MERCHANTS dans
+# spawn/generate_spawn_districts.py), et 1 émeraude permet d'acheter des objets revendables
+# jusqu'à « valeur-emeraude » $ via /sell (ex. 6 pains à 30 $). Si la boutique vendait ces objets trop
+# peu cher, on pourrait les acheter ici, les donner au PNJ, puis revendre le résultat.
+# Règle : prix d'achat unitaire x quantité >= marge x valeur-emeraude, sinon l'objet est ignoré.
+# Pour ne pas se compliquer la vie, plusieurs de ces objets ne sont simplement pas en boutique.
+# À tenir à jour avec les échanges des PNJ et worth.yml.
+anti-boucle:
+  valeur-emeraude: 180
+  marge: 1.2
+  quantite-pour-1-emeraude:
+    IRON_INGOT: 6
+    CHICKEN: 14
+    PORKCHOP: 7
+    COAL: 16
+    CLAY_BALL: 10
+    WHEAT: 20
+    CARROT: 16
+    ROTTEN_FLESH: 32
+    PAPER: 24
+# --- Catégories ---
+# Chaque catégorie : title (titre), icon (matériau du menu principal), slot (emplacement dans le menu
+# principal), description (lore), items (liste paginée). Un item :
+#   material: matériau Bukkit ; buy: prix d'achat ; sell: prix de vente (facultatif) ;
+#   name: nom affiché (facultatif) ; spawner: type d'entité (pour material: SPAWNER).
+categories:
+
+  blocs:
+    title: "&8Blocs"
+    icon: STONE
+    slot: 10
+    description:
+      - "&7Blocs de construction"
+    items:
+      - {material: STONE, buy: 12, sell: 3}
+      - {material: COBBLESTONE, buy: 4, sell: 1}
+      - {material: DIRT, buy: 4, sell: 1}
+      - {material: SAND, buy: 4, sell: 1}
+      - {material: GRAVEL, buy: 4, sell: 1}
+      - {material: OAK_LOG, buy: 8, sell: 2}
+      - {material: OAK_PLANKS, buy: 2, sell: 0.5}
+      - {material: GLASS, buy: 12, sell: 3}
+      - {material: SANDSTONE, buy: 12, sell: 3}
+      - {material: BRICKS, buy: 84, sell: 21}
+      - {material: MOSSY_COBBLESTONE, buy: 360, sell: 90}
+      - {material: STONE_BRICKS, buy: 12, sell: 3}
+      - {material: SMOOTH_STONE, buy: 8, sell: 2}
+      - {material: QUARTZ_BLOCK, buy: 120, sell: 30}
+      - {material: TERRACOTTA, buy: 16, sell: 4}
+      - {material: WHITE_WOOL, buy: 80, sell: 20}
+      - {material: SPRUCE_PLANKS, buy: 4, sell: 1}
+      - {material: BIRCH_PLANKS, buy: 4, sell: 1}
+      - {material: SPRUCE_LOG, buy: 8, sell: 2}
+      - {material: BIRCH_LOG, buy: 8, sell: 2}
+      - {material: SPONGE, buy: 320, sell: 80}
+      - {material: BOOKSHELF, buy: 560, sell: 140}
+      - {material: COBBLESTONE_STAIRS, buy: 6, sell: 1.5}
+      - {material: STONE_SLAB, buy: 6, sell: 1.5}
+      - {material: LADDER, buy: 2, sell: 0.5}
+      - {material: TORCH, buy: 16, sell: 4}
+      - {material: CHEST, buy: 16, sell: 4}
+      - {material: FURNACE, buy: 34, sell: 8.5}
+      - {material: CRAFTING_TABLE, buy: 10, sell: 2.5}
+      - {material: JACK_O_LANTERN, buy: 225, sell: 56}
+  minerais:
+    title: "&bMinerais"
+    icon: DIAMOND
+    slot: 12
+    description:
+      - "&7Minerais, lingots et blocs"
+    items:
+      - {material: COAL, buy: 60, sell: 15}
+      - {material: COAL_ORE, buy: 60, sell: 15}
+      - {material: IRON_ORE, buy: 72, sell: 18}
+      - {material: GOLD_ORE, buy: 180, sell: 45}
+      - {material: DIAMOND_ORE, buy: 800, sell: 200}
+      - {material: LAPIS_ORE, buy: 400, sell: 100}
+      - {material: REDSTONE_ORE, buy: 120, sell: 30}
+      - {material: IRON_INGOT, buy: 88, sell: 22}
+      - {material: GOLD_INGOT, buy: 420, sell: 105}
+      - {material: DIAMOND, buy: 800, sell: 200}
+      - {material: GLOWSTONE_DUST, buy: 40, sell: 10}
+      - {material: COPPER_INGOT, buy: 24, sell: 6}
+      - {material: QUARTZ, buy: 40, sell: 10}
+      - {material: EMERALD, buy: 600, sell: 150}
+      - {material: IRON_BLOCK, buy: 760, sell: 190}
+      - {material: GOLD_BLOCK, buy: 1800, sell: 450}
+      - {material: DIAMOND_BLOCK, buy: 8000, sell: 2000}
+      - {material: LAPIS_BLOCK, buy: 3800, sell: 950}
+  nourriture:
+    title: "&6Nourriture"
+    icon: COOKED_BEEF
+    slot: 14
+    description:
+      - "&7Vivres"
+    items:
+      - {material: BREAD, buy: 120, sell: 30}
+      - {material: APPLE, buy: 40, sell: 10}
+      - {material: GOLDEN_APPLE, buy: 400, sell: 100}
+      - {material: COOKED_PORKCHOP, buy: 28, sell: 7}
+      - {material: COOKED_COD, buy: 28, sell: 7}
+      - {material: COD, buy: 20, sell: 5}
+      - {material: CAKE, buy: 720, sell: 180}
+      - {material: MILK_BUCKET, buy: 160, sell: 40}
+      - {material: MUSHROOM_STEW, buy: 18, sell: 4.5}
+      - {material: COOKED_BEEF, buy: 12, sell: 3}
+      - {material: COOKED_CHICKEN, buy: 10, sell: 2.5}
+      - {material: COOKED_MUTTON, buy: 12, sell: 3}
+      - {material: BAKED_POTATO, buy: 8, sell: 2}
+      - {material: GOLDEN_CARROT, buy: 40, sell: 10}
+      - {material: PUMPKIN_PIE, buy: 20, sell: 5}
+      - {material: COOKIE, buy: 6, sell: 1.5}
+      - {material: ENCHANTED_GOLDEN_APPLE, buy: 5000, sell: 1250}
+  agriculture:
+    title: "&aAgriculture"
+    icon: WHEAT
+    slot: 16
+    description:
+      - "&7Cultures et élevage"
+    items:
+      - {material: WHEAT, buy: 36, sell: 9}
+      - {material: WHEAT_SEEDS, buy: 8, sell: 2}
+      - {material: SUGAR_CANE, buy: 40, sell: 10}
+      - {material: PUMPKIN, buy: 200, sell: 50}
+      - {material: CACTUS, buy: 40, sell: 10}
+      - {material: BROWN_MUSHROOM, buy: 8, sell: 2}
+      - {material: RED_MUSHROOM, buy: 8, sell: 2}
+      - {material: SUGAR, buy: 40, sell: 10}
+      - {material: EGG, buy: 4, sell: 1}
+      - {material: BONE, buy: 8, sell: 2}
+      - {material: FEATHER, buy: 12, sell: 3}
+      - {material: LEATHER, buy: 40, sell: 10}
+      - {material: DANDELION, buy: 8, sell: 2}
+      - {material: POPPY, buy: 8, sell: 2}
+      - {material: OAK_SAPLING, buy: 8, sell: 2}
+      - {material: POTATO, buy: 6, sell: 1.5}
+      - {material: BEETROOT_SEEDS, buy: 4, sell: 1}
+      - {material: MELON_SLICE, buy: 4, sell: 1}
+      - {material: MELON, buy: 20, sell: 5}
+      - {material: BONE_MEAL, buy: 8, sell: 2}
+      - {material: NETHER_WART, buy: 20, sell: 5}
+      - {material: HAY_BLOCK, buy: 90, sell: 22.5}
+  redstone:
+    title: "&cRedstone"
+    icon: REDSTONE
+    slot: 19
+    description:
+      - "&7Mécanismes"
+    items:
+      - {material: REDSTONE, buy: 130, sell: 32}
+      - {material: REDSTONE_TORCH, buy: 130, sell: 32}
+      - {material: REPEATER, buy: 440, sell: 110}
+      - {material: DISPENSER, buy: 235, sell: 58}
+      - {material: LEVER, buy: 4, sell: 1}
+      - {material: STONE_BUTTON, buy: 24, sell: 6}
+      - {material: STONE_PRESSURE_PLATE, buy: 24, sell: 6}
+      - {material: OAK_PRESSURE_PLATE, buy: 4, sell: 1}
+      - {material: NOTE_BLOCK, buy: 145, sell: 36}
+      - {material: RAIL, buy: 88, sell: 22}
+      - {material: MINECART, buy: 92, sell: 23}
+      - {material: SLIME_BALL, buy: 200, sell: 50}
+      - {material: STRING, buy: 20, sell: 5}
+      - {material: GUNPOWDER, buy: 80, sell: 20}
+      - {material: PISTON, buy: 60, sell: 15}
+      - {material: STICKY_PISTON, buy: 140, sell: 35}
+      - {material: OBSERVER, buy: 60, sell: 15}
+      - {material: HOPPER, buy: 80, sell: 20}
+      - {material: COMPARATOR, buy: 120, sell: 30}
+      - {material: REDSTONE_BLOCK, buy: 300, sell: 75}
+      - {material: REDSTONE_LAMP, buy: 60, sell: 15}
+      - {material: DROPPER, buy: 40, sell: 10}
+  raid:
+    title: "&4Raid"
+    icon: TNT
+    slot: 21
+    description:
+      - "&7TNT, obsidienne, sable, dispensers, eau"
+    items:
+      - {material: TNT, buy: 400, sell: 100}
+      - {material: OBSIDIAN, buy: 520, sell: 130}
+      - {material: SAND, buy: 4, sell: 1}
+      - {material: RED_SAND, buy: 4, sell: 1}
+      - {material: GRAVEL, buy: 4, sell: 1}
+      - {material: DISPENSER, buy: 235, sell: 58}
+      - {material: WATER_BUCKET, buy: 160, sell: 40}
+      - {material: LAVA_BUCKET, buy: 160, sell: 40}
+      - {material: BUCKET, buy: 88, sell: 22}
+      - {material: GUNPOWDER, buy: 80, sell: 20}
+      - {material: REPEATER, buy: 440, sell: 110}
+      - {material: LEVER, buy: 4, sell: 1}
+      - {material: STONE_BUTTON, buy: 24, sell: 6}
+      - {material: REDSTONE, buy: 130, sell: 32}
+      - {material: FLINT_AND_STEEL, buy: 30, sell: 7.5}
+      - {material: ENDER_PEARL, buy: 100, sell: 25}
+      - {material: CRYING_OBSIDIAN, buy: 400, sell: 100}
+  spawners:
+    title: "&5Spawners"
+    icon: SPAWNER
+    slot: 23
+    description:
+      - "&7Spawners (achat seulement)"
+    items:
+      - {material: SPAWNER, buy: 25000, spawner: COW, name: "&dSpawner Cow"}
+      - {material: SPAWNER, buy: 25000, spawner: PIG, name: "&dSpawner Pig"}
+      - {material: SPAWNER, buy: 25000, spawner: CHICKEN, name: "&dSpawner Chicken"}
+      - {material: SPAWNER, buy: 25000, spawner: SHEEP, name: "&dSpawner Sheep"}
+      - {material: SPAWNER, buy: 40000, spawner: ZOMBIE, name: "&dSpawner Zombie"}
+      - {material: SPAWNER, buy: 40000, spawner: SKELETON, name: "&dSpawner Skeleton"}
+      - {material: SPAWNER, buy: 40000, spawner: SPIDER, name: "&dSpawner Spider"}
+      - {material: SPAWNER, buy: 60000, spawner: CREEPER, name: "&dSpawner Creeper"}
+      - {material: SPAWNER, buy: 120000, spawner: BLAZE, name: "&dSpawner Blaze"}
+  divers:
+    title: "&eDivers"
+    icon: NAME_TAG
+    slot: 25
+    description:
+      - "&7Outils, armures et divers"
+    items:
+      - {material: SADDLE, buy: 400, sell: 100}
+      - {material: NAME_TAG, buy: 150, sell: 37.5}
+      - {material: BOOK, buy: 180, sell: 45}
+      - {material: PAPER, buy: 40, sell: 10}
+      - {material: COMPASS, buy: 88, sell: 22}
+      - {material: FISHING_ROD, buy: 40, sell: 10}
+      - {material: BOW, buy: 60, sell: 15}
+      - {material: ARROW, buy: 14, sell: 3.5}
+      - {material: EXPERIENCE_BOTTLE, buy: 150, sell: 37.5}
+      - {material: ANVIL, buy: 300, sell: 75}
+      - {material: ENCHANTING_TABLE, buy: 2500, sell: 625}
+      - {material: ENDER_CHEST, buy: 1500, sell: 375}
+      - {material: IRON_PICKAXE, buy: 88, sell: 22}
+      - {material: IRON_AXE, buy: 88, sell: 22}
+      - {material: IRON_SWORD, buy: 88, sell: 22}
+      - {material: DIAMOND_PICKAXE, buy: 2600, sell: 650}
+      - {material: DIAMOND_AXE, buy: 2600, sell: 650}
+      - {material: DIAMOND_SWORD, buy: 1680, sell: 420}
+      - {material: DIAMOND_HELMET, buy: 4000, sell: 1000}
+      - {material: DIAMOND_CHESTPLATE, buy: 7000, sell: 1750}
+      - {material: DIAMOND_LEGGINGS, buy: 6000, sell: 1500}
+      - {material: DIAMOND_BOOTS, buy: 3400, sell: 850}
