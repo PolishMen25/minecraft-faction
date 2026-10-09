@@ -198,6 +198,42 @@ Le dossier `spawn/` contient un spawn médiéval de 64 × 64 blocs, généré pa
 
 Pour modifier le spawn, édite `generate_spawn.py` puis relance `python3 spawn/generate_spawn.py` (Pillow requis pour l'aperçu).
 
+### Spawn complet (304 × 304, datapack `lifecraft_spawn`)
+
+`spawn/generate_spawn_districts.py` génère le datapack `spawn/datapack/lifecraft_spawn`, qui agrandit le spawn médiéval jusqu'aux limites de la safezone (19 × 19 chunks, X -80..223, Z -2256..-1953). Le spawn médiéval lui-même (X 45..108, Z -2144..-2081) n'est pas modifié : le générateur vérifie qu'aucune commande n'y écrit, ni en dehors de la safezone, ni ne dépasse 32 768 blocs par `fill`. Tout est déterministe (graines fixes) : relancer le générateur ou le build donne le même résultat.
+
+| Zone | Coordonnées (on marche à Y=69) | Contenu |
+|---|---|---|
+| Plateau | toute la safezone hors spawn médiéval | herbe à Y=68, terre de Y=60 à 67, vides comblés en pierre jusqu'à Y=50, relief rasé jusqu'à Y=110, lac asséché |
+| Rempart | pourtour, 3 d'épaisseur, Y 69..80 | chemin de ronde, parapet et créneaux, lanternes ; tours d'angle 9 × 9 jusqu'à Y=88 |
+| **Porte PvP** | passage X 69..75, Y 69..77, Z -1955..-1953 | **seule sortie vers la warzone**, dans l'axe du pont sud (X=72) ; 2 tours (X 63..67 et 77..81, Z -1960..-1953), herse décorative, bannières rouges |
+| Place du classement | X 62..82, Z -1981..-1961 | place pavée, bancs, podium centré en (72, -1971) |
+| Allées | N/S : X 74..79 ; E/O : Z -2115..-2110 | pavées, lampadaires tous les 12 blocs ; sud → porte, nord → arène, ouest → enchantement, est → marché |
+| Salle d'enchantement | X 0..24, Z -2125..-2100, porte à l'est (X 24, Z -2113..-2112) | 2 tables (6, 69, -2118) et (18, 69, -2118) avec 15 bibliothèques chacune, 2 enclumes, une meule, un pupitre |
+| Marché PNJ | X 116..180, Z -2126..-2099 | 8 étals ; au nord (Z -2120) : armurier, forgeron, fermier, bibliothécaire ; au sud (Z -2105) : maçon, boucher, outilleur, clerc |
+| Box | 2 × 2 chunks X -64..-33, Z -2032..-2001 | fosse X -60..-37, Z -2028..-2005, Y 59..68 (24 × 24 × 10), parois et fond en deepslate renforcée, escalier contre le mur ouest |
+| Arène de duel | 2 × 2 chunks X 64..95, Z -2192..-2161 | sol au niveau du plateau (l'ancienne balise KOTH est recouverte), muret + vitres sur 3 de haut, entrée au sud (X 74..79), gradins à l'extérieur |
+
+Les marchands (tag `lifecraft_pnj`) sont immobiles, invulnérables et muets ; le build tue d'abord ceux d'un build précédent (`minecraft:kill`, car EssentialsX intercepte `/kill`), il n'y a donc pas de doublons. Les échanges et les prix sont dans `MERCHANTS` du générateur. L'éclairage du plateau est calculé : un lampadaire est ajouté partout où la lumière au sol tomberait à 0.
+
+**Box** : toutes les 10 minutes, `lifecraft:spawn/box_tick` appelle `lifecraft:spawn/box_reset`, qui renvoie à la surface les joueurs restés dans la fosse, remet les 4 chunks à neuf (terrain, bord, escalier, garde-corps) et remplit la fosse d'un mélange fixe de pierre et de minerais (charbon, cuivre, fer, redstone, lapis, or, quelques diamants, très peu d'émeraudes). Si ses chunks ne sont pas chargés, elle les force pendant une seconde puis les libère. `box_tick` remplace aussi les 2 enclumes de la salle d'enchantement par des neuves. Pour réinitialiser à la main : `/function lifecraft:spawn/box_reset`.
+
+**Construction** (environ 106 étapes, 1 à 2 minutes) :
+```
+mc-backup                                     # les fill ne sont pas journalisés par CoreProtect
+python3 spawn/generate_spawn_districts.py
+cp -r spawn/datapack/lifecraft_spawn /opt/minecraft/world/datapacks/
+mc-cmd "reload"
+mc-cmd "function lifecraft:spawn/build"       # attendre « Spawn : construction terminée »
+mc-cmd "koth classement 72.5 74 -1970.5"      # classement au-dessus du podium
+```
+Comme pour la warzone, la construction charge elle-même les chunks de chaque étape (forceload), pas besoin d'être connecté. Ne la lance pas deux fois en même temps.
+
+**Protection FactionsUUID** : la safezone couvre déjà tout le spawn (voir Warzone). Deux exceptions à régler en jeu, chunk par chunk :
+- **arène de duel** : ses 4 chunks doivent passer en **warzone** pour que le PvP y soit actif (les gradins, juste à l'extérieur, restent en safezone). Mort en warzone = perte de power.
+- **box** : en safezone, personne ne peut casser de bloc. Ses 4 chunks doivent être retirés de la safezone (wilderness) pour être minables ; le PvP y devient alors possible, et il faut empêcher qu'une faction les claim (aucune option dédiée dans FactionsUUID : à surveiller, ou à confier à un plugin de régions).
+- vérifier aussi que les joueurs peuvent, en safezone, ouvrir la porte de la salle d'enchantement, utiliser tables, enclumes et meule, et commercer avec les villageois (listes de matériaux protégés de la section `protection` de la config FactionsUUID).
+
 ## Grades (LuckPerms)
 
 `scripts/setup-grades.sh` crée quatre grades hiérarchiques, chacun héritant du précédent, avec préfixe dans le chat :
