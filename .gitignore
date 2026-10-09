@@ -1,3 +1,4 @@
 *.jar
 backups/
 *.tar.zst
+plugins/koth/target/

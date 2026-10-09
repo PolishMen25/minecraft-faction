@@ -1,0 +1,46 @@
+# LifeKoth : events King of the Hill
+#
+# Une faction capture la KOTH en restant seule dans la zone pendant "capture-seconds"
+# secondes d'affilée. Si une autre faction entre, le compteur est gelé (zone contestée) ;
+# si la faction qui capture quitte la zone ou y meurt entièrement, le compteur repart à zéro.
+# Les joueurs sans faction comptent chacun comme une équipe à part.
+
+capture-seconds: 300
+# Durée maximale d'un event (minutes) ; passé ce délai il se termine sans vainqueur.
+max-duration-minutes: 30
+# Hauteur de la zone sous et au-dessus du bloc central.
+zone-below: 2
+
+schedule:
+  enabled: true
+  timezone: Europe/Paris
+  # Heures de lancement automatique (HH:mm)
+  times:
+    - "21:00"
+  # Jours (MONDAY..SUNDAY) ; liste vide = tous les jours
+  days: []
+  # Nom de la KOTH à lancer, ou "random"
+  koth: random
+  # Annonce N minutes avant le lancement (0 pour désactiver)
+  warn-minutes: 5
+
+rewards:
+  # Commandes exécutées par la console pour le gagnant.
+  # {player} = joueur de la faction gagnante présent dans la zone, {faction} = nom de la faction.
+  # Les commandes contenant {faction} sont ignorées si le gagnant n'a pas de faction.
+  commands:
+    - "eco give {player} 5000"
+    - "f powerboost f {faction} 5"
+  # Coffre de loot posé au-dessus du centre : MATERIAU:quantité[:enchant=niveau,enchant=niveau]
+  loot-chest: true
+  loot:
+    - "DIAMOND:8"
+    - "GOLDEN_APPLE:6"
+    - "ENCHANTED_GOLDEN_APPLE:1"
+    - "TNT:16"
+    - "EXPERIENCE_BOTTLE:32"
+    - "DIAMOND_SWORD:1:sharpness=3,unbreaking=2"
+    - "DIAMOND_CHESTPLATE:1:protection=2,unbreaking=2"
+
+# KOTH créées en jeu avec /koth create (ne pas modifier à la main sauf pour corriger)
+zones: {}

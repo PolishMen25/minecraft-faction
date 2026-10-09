@@ -1,0 +1,14 @@
+name: LifeKoth
+version: '${project.version}'
+main: fr.lifecraft.koth.KothPlugin
+api-version: '1.21'
+description: Events King of the Hill pour le serveur Faction (capture par faction)
+softdepend: [FactionsUUID, Factions, Essentials]
+commands:
+  koth:
+    description: Events King of the Hill
+    usage: /koth <info|list|top|start|stop|create|delete|reload>
+permissions:
+  koth.admin:
+    description: Créer, supprimer, lancer et arrêter les KOTH
+    default: op

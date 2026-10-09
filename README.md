@@ -194,6 +194,24 @@ Trois leviers, du plus efficace au moins efficace :
 
 `region-file-compression=lz4` (dans `server.properties`) accélère aussi la lecture et l'écriture des chunks.
 
+## Events KOTH (plugin LifeKoth)
+
+Plugin maison (`plugins/koth/`), compilé par GitHub Actions et installé automatiquement par `install.sh`.
+
+- **Capture** : une faction doit tenir la zone **seule pendant 5 minutes d'affilée**. Si une autre faction entre, le compteur est gelé (zone contestée) ; si la faction qui capture quitte la zone ou y meurt, il repart à zéro. Les joueurs sans faction comptent chacun pour eux.
+- **Planning** : lancement automatique tous les jours à 21h (annonce 5 min avant), ou à la main.
+- **Récompenses** : coffre de loot au centre, 5 000 $ au capteur, +5 de power pour sa faction, annonce et classement (`/koth top`).
+- **Affichage** : barre de boss avec la faction qui capture et le temps restant.
+
+| Commande | Rôle |
+|---|---|
+| `/koth create <nom> [rayon] [hauteur]` | crée une KOTH centrée sur toi (rayon 3 = zone de 7×7) |
+| `/koth start [nom]` / `/koth stop` | lance / arrête un event |
+| `/koth list`, `/koth info`, `/koth top` | KOTH existantes, event en cours, classement |
+| `/koth delete <nom>`, `/koth reload` | supprime une KOTH, recharge la config |
+
+Réglages dans `plugins/LifeKoth/config.yml` : durée de capture, horaires, jours, loot, commandes de récompense.
+
 ## Arborescence du dépôt
 
 ```
