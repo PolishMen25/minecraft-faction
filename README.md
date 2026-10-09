@@ -157,6 +157,26 @@ Le dossier `spawn/` contient un spawn médiéval de 64 × 64 blocs, généré pa
 
 Pour modifier le spawn, édite `generate_spawn.py` puis relance `python3 spawn/generate_spawn.py` (Pillow requis pour l'aperçu).
 
+## Grades (LuckPerms)
+
+`scripts/setup-grades.sh` crée quatre grades hiérarchiques, chacun héritant du précédent, avec préfixe dans le chat :
+
+| Grade | Préfixe | Permissions principales |
+|---|---|---|
+| Joueur (`default`) | `[Joueur]` | /spawn, /home, /sethome, /tpa, /msg, /warp, /kit, /pay, /bal |
+| VIP | `[VIP]` | + plusieurs homes, /craft, /ec, /hat, /nick, couleurs dans le chat |
+| Modo | `[Modo]` | + /kick, /mute, /ban, /tempban, /jail, /vanish, /invsee, /tp, /whitelist |
+| Admin | `[Admin]` | toutes les permissions |
+
+```bash
+./scripts/setup-grades.sh xPolishMenx        # crée les grades et met ce joueur Admin
+mc-cmd "lp user Pseudo parent set vip"       # donner un grade (default / vip / modo / admin)
+```
+
+## Mémoire
+
+Au-delà de 12 Go (`RAM=16G ./install.sh`), le script applique automatiquement les réglages G1 recommandés pour les gros tas. Inutile de dépasser 16 Go : un serveur Minecraft n'en tire aucun bénéfice et les pauses du ramasse-miettes s'allongent. Le conteneur doit avoir environ 4 Go de plus que `RAM`.
+
 ## Arborescence du dépôt
 
 ```
