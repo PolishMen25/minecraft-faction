@@ -177,6 +177,23 @@ mc-cmd "lp user Pseudo parent set vip"       # donner un grade (default / vip / 
 
 Au-delà de 12 Go (`RAM=16G ./install.sh`), le script applique automatiquement les réglages G1 recommandés pour les gros tas. Inutile de dépasser 16 Go : un serveur Minecraft n'en tire aucun bénéfice et les pauses du ramasse-miettes s'allongent. Le conteneur doit avoir environ 4 Go de plus que `RAM`.
 
+## Performances : chargement des chunks
+
+Trois leviers, du plus efficace au moins efficace :
+
+1. **Pré-générer la carte avec Chunky** (installé par le script). Les chunks sont alors seulement lus sur le SSD au lieu d'être générés quand un joueur arrive. En console :
+   ```
+   worldborder center 0 0
+   worldborder set 10000
+   chunky radius 5000
+   chunky start
+   ```
+   `chunky progress` affiche l'avancement. Fais pareil dans le Nether (`chunky world world_nether`, rayon plus petit).
+2. **Donner beaucoup de RAM au conteneur, mais pas à Java** : la RAM du conteneur au-delà du tas Java sert de cache disque à Linux. Les fichiers de région déjà lus restent en mémoire, et les chunks se chargent depuis la RAM.
+3. **Tous les cœurs CPU au conteneur** : Paper génère et charge les chunks sur plusieurs threads.
+
+`region-file-compression=lz4` (dans `server.properties`) accélère aussi la lecture et l'écriture des chunks.
+
 ## Arborescence du dépôt
 
 ```

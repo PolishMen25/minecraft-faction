@@ -34,6 +34,7 @@ PLUGINS=(
   "ViaRewind|viarewind||ViaVersion/ViaRewind|^ViaRewind-[0-9.]+\.jar$|"
   "OldCombatMechanics||OldCombatMechanics|kernitus/OldCombatMechanics|^OldCombatMechanics.*\.jar$|https://hangar.papermc.io/kernitus/OldCombatMechanics"
   "LuckPerms|luckperms||||"
+  "Chunky|chunky|Chunky|||"
   "Vault|||MilkBowl/Vault|^Vault\.jar$|"
   "EssentialsX|||EssentialsX/Essentials|^EssentialsX-[0-9][^-]*\.jar$|"
   "EssentialsXSpawn|||EssentialsX/Essentials|^EssentialsXSpawn-.*\.jar$|"
