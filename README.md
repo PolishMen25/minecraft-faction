@@ -257,6 +257,36 @@ Réglages dans `plugins/LifeKoth/config.yml` : durée de capture, horaires, jour
 
 **Arène « Colline »** : dans la warzone, à 35 blocs au nord de l'arche du spawn (77, 65, -2180). Plateforme de 17×17, zone de capture de 7×7 bordée d'or, balise au centre dont le faisceau jaune se voit de loin. Le coffre de loot apparaît sur le socle en verre. Étant en warzone, personne ne peut la claim, y construire ou y poser de la TNT.
 
+### Avant-postes (AP)
+
+Zones capturables tenues dans la durée (style LifeCraft). Seules les factions comptent : un joueur sans faction dans la zone est prévenu en action bar et ignoré.
+
+- **Capture** : une faction seule dans la zone gagne 1 s de progression par seconde ; à **2 minutes** (`outposts.capture-seconds`) elle devient propriétaire (annonce globale et son). Si une autre faction prend le relais, sa progression repart de zéro.
+- **Contesté** : plusieurs factions dans la zone (propriétaire compris) gèlent la progression.
+- **Zone vide** (ou seulement le propriétaire) : la progression des attaquants redescend de 1 par seconde.
+- **Récompenses** : toutes les **10 minutes** (`outposts.reward-interval-minutes`), les commandes de `outposts.rewards` sont exécutées pour la faction propriétaire (`{player}` = chaque membre en ligne, `{faction}` = nom de la faction ; par défaut 150 $ par membre).
+- **Affichage** : action bar dans la zone (« capture par X 37/120 s », « contesté », « tenu par X »). Option `glass` : un bloc de verre (à poser au-dessus d'une balise) prend une couleur fixe par faction propriétaire, verre normal si l'AP est neutre.
+- **Données** : zones dans `config.yml` (`outposts.zones`), propriétaires dans `plugins/LifeKoth/outposts.yml`, nombre de captures par faction dans `stats.yml` (`outpost-captures`).
+
+| Commande | Rôle |
+|---|---|
+| `/ap list`, `/ap info <nom>` | avant-postes, coordonnées, propriétaire (alias `/avantposte`) |
+| `/ap create <nom> [rayon] [hauteur]` | crée un AP centré sur toi (en jeu) |
+| `/ap create <nom> <x> <y> <z> [rayon] [hauteur] [monde]` | crée un AP aux coordonnées (console OK, monde `world` par défaut) |
+| `/ap glass <nom> <x> <y> <z>` | position du verre coloré (console OK) |
+| `/ap delete <nom>`, `/ap reset <nom>`, `/ap reload` | supprime, rend neutre, recharge la config |
+
+### Classement
+
+Panneau flottant (TextDisplay) devant la sortie du spawn, mis à jour toutes les 60 s : top 10 des victoires KOTH, avant-postes et leur propriétaire, top 5 des captures d'avant-postes. Il n'est mis à jour que lorsque son chunk est chargé ; les doublons éventuels sont supprimés automatiquement.
+
+| Commande | Rôle |
+|---|---|
+| `/koth classement <x> <y> <z> [monde]` | place (ou déplace) le classement (console OK, monde `world` par défaut) |
+| `/koth classement off` | retire le classement |
+
+Les commandes d'admin demandent la permission `koth.admin` (op par défaut).
+
 ## Arborescence du dépôt
 
 ```
