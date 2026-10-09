@@ -7,17 +7,17 @@
 #  seuls le jar Paper et les plugins sont remis à jour.
 #
 #  Variables surchargeables :
-#    MC_VERSION=26.1.2 version Minecraft/Paper
+#    MC_VERSION=26.2   version Minecraft/Paper
 #    RAM=5G            mémoire allouée à la JVM (Xms = Xmx)
 #    JAVA_VERSION=25   version de Java (Temurin)
 #    MC_DIR=/opt/minecraft
 #    EULA=true         accepte l'EULA Mojang sans poser la question
 #
-#  Exemple : MC_VERSION=26.1.2 RAM=6G ./install.sh
+#  Exemple : MC_VERSION=26.2 RAM=6G ./install.sh
 # =============================================================================
 set -euo pipefail
 
-MC_VERSION="${MC_VERSION:-26.1.2}"
+MC_VERSION="${MC_VERSION:-26.2}"
 RAM="${RAM:-5G}"
 JAVA_VERSION="${JAVA_VERSION:-25}"
 MC_DIR="${MC_DIR:-/opt/minecraft}"
