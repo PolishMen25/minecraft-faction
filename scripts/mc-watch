@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Surveillance lancée toutes les 5 minutes par minecraft-watch.timer.
+# Alerte (mc-alert) quand un problème apparaît, puis quand il disparaît : pas de répétition entre les deux.
+set -uo pipefail
+CONF="${MC_FACTION_CONF:-/etc/minecraft-faction.conf}"
+MC_DIR="${MC_DIR:-/opt/minecraft}"
+STATE="${MC_WATCH_STATE:-/var/lib/minecraft-faction}"
+DISK_ALERT_PCT=85 BACKUP_MAX_AGE_HOURS=26 OFFSITE_DIR=""
+[[ -f "$CONF" ]] && . "$CONF"
+mkdir -p "$STATE"
+
+# check <nom> <ok:0|1> <titre du problème> <détail> <titre du retour à la normale>
+check() {
+  local name="$1" ok="$2" title="$3" detail="$4" back="$5" flag="$STATE/alert-$1"
+  if (( ok )); then
+    [[ -f "$flag" ]] && { rm -f "$flag"; mc-alert ok "$back"; }
+  elif [[ ! -f "$flag" ]]; then
+    mc-alert crit "$title" "$detail" && touch "$flag"
+  fi
+}
+
+# 1. Serveur : service actif ET console tmux présente (si Java plante, tmux disparaît)
+up=0
+systemctl is-active --quiet minecraft && env -u TMUX runuser -u minecraft -- tmux has-session -t mc 2>/dev/null && up=1
+# Pas d'alerte pendant un arrêt volontaire (systemctl stop) : seulement si le service devrait tourner
+if (( ! up )) && ! systemctl is-enabled --quiet minecraft; then up=1; fi
+check server "$up" "Serveur Minecraft arrêté" \
+  "Le service ne tourne plus. État : $(systemctl is-active minecraft). Voir : journalctl -u minecraft -n 50" \
+  "Serveur Minecraft de nouveau en ligne"
+
+# 2. Disque
+pct=$(df -P "$MC_DIR" | awk 'NR==2 {gsub("%","",$5); print $5}')
+check disk "$(( pct < DISK_ALERT_PCT ))" "Disque presque plein : ${pct} %" \
+  "$(df -h "$MC_DIR" | awk 'NR==2 {print $4" libres sur "$2}'). Les sauvegardes s'arrêteront faute de place." \
+  "Espace disque revenu à ${pct} %"
+
+# 3. Fraîcheur de la dernière sauvegarde
+last=$(ls -1t "$MC_DIR"/backups/backup_*.tar.zst 2>/dev/null | head -1)
+age=999999
+[[ -n "$last" ]] && age=$(( ($(date +%s) - $(stat -c %Y "$last")) / 3600 ))
+since=$( [[ -n "$last" ]] && echo "depuis ${age} h" || echo "(aucune trouvée)" )
+check backup "$(( age <= BACKUP_MAX_AGE_HOURS ))" "Pas de sauvegarde $since" \
+  "Dernière : ${last:-aucune}. Voir : journalctl -u minecraft-backup -n 30" \
+  "Sauvegardes de nouveau à jour"
+
+# 4. Sauvegarde hors site (si configurée)
+if [[ -n "$OFFSITE_DIR" ]]; then
+  olast=$(ls -1t "$OFFSITE_DIR"/backup_*.tar.zst 2>/dev/null | head -1)
+  oage=999999
+  [[ -n "$olast" ]] && oage=$(( ($(date +%s) - $(stat -c %Y "$olast")) / 3600 ))
+  osince=$( [[ -n "$olast" ]] && echo "depuis ${oage} h" || echo "(aucune trouvée)" )
+  check offsite "$(( oage <= BACKUP_MAX_AGE_HOURS ))" "Pas de copie hors site $osince" \
+    "Dossier : $OFFSITE_DIR (monté ? accessible en écriture ?)" "Copies hors site de nouveau à jour"
+fi
+exit 0

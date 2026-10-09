@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Copie la dernière sauvegarde dans OFFSITE_DIR (/etc/minecraft-faction.conf), vérifie l'empreinte,
+# puis garde les OFFSITE_KEEP dernières. Lancé après chaque mc-backup par minecraft-backup.service.
+set -euo pipefail
+CONF="${MC_FACTION_CONF:-/etc/minecraft-faction.conf}"
+MC_DIR="${MC_DIR:-/opt/minecraft}"
+OFFSITE_DIR="" OFFSITE_KEEP=7
+[[ -f "$CONF" ]] && . "$CONF"
+[[ -z "$OFFSITE_DIR" ]] && { echo "Sauvegarde hors site désactivée (OFFSITE_DIR vide dans $CONF)."; exit 0; }
+
+fail() { echo "$1" >&2; mc-alert crit "Échec de la sauvegarde hors site" "$1" || true; exit 1; }
+
+[[ -d "$OFFSITE_DIR" && -w "$OFFSITE_DIR" ]] || fail "$OFFSITE_DIR n'existe pas ou n'est pas accessible en écriture (point de montage absent ?)."
+# Refuse d'écrire sur le même disque que le serveur : ce ne serait pas une copie hors site
+[[ "$(stat -c %d "$OFFSITE_DIR")" != "$(stat -c %d "$MC_DIR/backups")" ]] \
+  || fail "$OFFSITE_DIR est sur le même disque que $MC_DIR : monte un autre disque ou une autre machine."
+
+src=$(ls -1t "$MC_DIR"/backups/backup_*.tar.zst 2>/dev/null | head -1)
+[[ -n "$src" ]] || fail "Aucune sauvegarde locale à copier."
+dst="$OFFSITE_DIR/$(basename "$src")"
+[[ -f "$dst" ]] && { echo "Déjà copiée : $dst"; exit 0; }
+
+need=$(du -k "$src" | cut -f1); free=$(df -Pk "$OFFSITE_DIR" | awk 'NR==2 {print $4}')
+(( free > need )) || fail "Place insuffisante dans $OFFSITE_DIR : $((free / 1024)) Mo libres, $((need / 1024)) Mo nécessaires."
+
+trap 'rm -f "$dst.part"' EXIT
+cp "$src" "$dst.part" || fail "Copie interrompue vers $OFFSITE_DIR."
+[[ "$(sha256sum < "$src")" == "$(sha256sum < "$dst.part")" ]] || fail "Empreinte différente après copie de $(basename "$src")."
+mv "$dst.part" "$dst"
+
+ls -1t "$OFFSITE_DIR"/backup_*.tar.zst | tail -n +$((OFFSITE_KEEP + 1)) | xargs -r rm -f
+echo "Copie hors site : $dst ($(du -h "$dst" | cut -f1), empreinte vérifiée)"
