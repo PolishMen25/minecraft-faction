@@ -138,6 +138,25 @@ Pour que tes potes se connectent depuis chez eux, tu as deux options :
 
 La whitelist reste ta protection principale : ne la désactive pas si le port est ouvert.
 
+## Spawn médiéval
+
+Le dossier `spawn/` contient un spawn médiéval de 64 × 64 blocs, généré par `spawn/generate_spawn.py` : fontaine à deux niveaux, place pavée, quatre arches crénelées avec bannières, lampadaires, bancs, muret et haie, jardins fleuris, puits et étals de marché.
+
+![Aperçu du spawn](spawn/preview.png)
+
+**Installation**
+1. Fais une sauvegarde : `mc-backup`.
+2. Dans le conteneur : `cd ~/minecraft-faction && git pull && ./spawn/install-spawn.sh`
+3. En jeu, choisis un terrain plutôt plat et place-toi au centre, les pieds sur le sol, puis :
+   ```
+   /place template lifecraft:spawn_medieval ~-32 ~-5 ~-32
+   ```
+   Le spawn est centré sur toi, son sol remplace le niveau du terrain et tout ce qui dépasse dans le volume de 64 × 64 × 19 au-dessus est dégagé.
+4. Monte sur la fontaine (au centre exact) et protège la zone : `/f warzone 6` puis `/f safezone 2`.
+5. Va sur la place, devant la fontaine, et définis le point d'apparition : `/setworldspawn` puis `/setspawn`.
+
+Pour modifier le spawn, édite `generate_spawn.py` puis relance `python3 spawn/generate_spawn.py` (Pillow requis pour l'aperçu).
+
 ## Arborescence du dépôt
 
 ```
