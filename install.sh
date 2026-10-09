@@ -206,6 +206,8 @@ if [[ ! -f "$MC_DIR/eula.txt" ]] || ! grep -q '^eula=true' "$MC_DIR/eula.txt"; t
 fi
 
 # Script de lancement (flags Aikar, régénéré à chaque installation pour suivre RAM)
+# preferIPv4Stack : sans accès IPv6 (cas courant en LXC), Java reste bloqué sur les
+# résolutions AAAA vers Mojang (whitelist, connexion des joueurs).
 # G1RSetUpdatingPauseIntervalMillis, présent dans les flags Aikar d'origine, n'existe plus depuis Java 20.
 JVM_FLAGS="-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \
 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch \
@@ -226,6 +228,7 @@ cat > "$MC_DIR/start.sh" <<EOF
 cd "$MC_DIR"
 exec "$JAVA_BIN" -Xms${RAM} -Xmx${RAM} \\
   $JVM_FLAGS \\
+  -Djava.net.preferIPv4Stack=true \\
   -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true \\
   -jar paper.jar --nogui
 EOF
