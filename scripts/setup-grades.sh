@@ -35,13 +35,13 @@ perms default \
   essentials.msg essentials.r essentials.ignore essentials.mail essentials.mail.send \
   essentials.list essentials.motd essentials.rules essentials.help essentials.afk \
   essentials.balance essentials.balancetop essentials.pay \
-  essentials.warp essentials.warp.list essentials.kit
+  essentials.warp essentials.warp.list essentials.kit essentials.kits.starter essentials.kits.pvp
 
 echo "Permissions VIP..."
 perms vip \
   essentials.sethome.multiple essentials.sethome.multiple.vip \
   essentials.workbench essentials.enderchest essentials.hat \
-  essentials.nick essentials.chat.color
+  essentials.nick essentials.chat.color essentials.kits.vip
 
 echo "Permissions Modo..."
 perms modo \

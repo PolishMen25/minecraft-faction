@@ -163,8 +163,8 @@ Pour modifier le spawn, édite `generate_spawn.py` puis relance `python3 spawn/g
 
 | Grade | Préfixe | Permissions principales |
 |---|---|---|
-| Joueur (`default`) | `[Joueur]` | /spawn, /home, /sethome, /tpa, /msg, /warp, /kit, /pay, /bal |
-| VIP | `[VIP]` | + plusieurs homes, /craft, /ec, /hat, /nick, couleurs dans le chat |
+| Joueur (`default`) | `[Joueur]` | /spawn, /home, /sethome, /tpa, /msg, /warp, /kit starter, /kit pvp, /pay, /bal |
+| VIP | `[VIP]` | + /kit vip, plusieurs homes, /craft, /ec, /hat, /nick, couleurs dans le chat |
 | Modo | `[Modo]` | + /kick, /mute, /ban, /tempban, /jail, /vanish, /invsee, /tp, /whitelist |
 | Admin | `[Admin]` | toutes les permissions |
 
