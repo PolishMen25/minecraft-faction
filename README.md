@@ -237,6 +237,34 @@ Trois leviers, du plus efficace au moins efficace :
 
 `region-file-compression=lz4` (dans `server.properties`) accélère aussi la lecture et l'écriture des chunks.
 
+## Warzone
+
+Le dossier `warzone/` contient `generate_warzone.py`, qui génère le datapack `lifecraft_warzone` : une warzone de 75 × 75 chunks (1 200 × 1 200 blocs, X -528 à 671, Z -2704 à -1505) centrée sur le spawn.
+
+- **Faille** : anneau carré de 40 blocs de large et d'environ 52 de profondeur, à 320 blocs du centre (bord extérieur X -288..431, Z -2464..-1745). Fond à Y=12.
+- **Passages** : 4 ponts au milieu des côtés, 4 remontées en escalier dans les angles.
+- **KOTH « Colline »** : (72, 79, -2340), entre le rempart du spawn et la faille.
+- **Avant-postes** : « Est » (552, 65, -2104) et « Ouest » (-408, 119, -2104), au-delà de la faille. Chacun a une palissade, 4 tours de guet, une zone de capture de 7×7 et une balise dont le verre prend la couleur de la faction propriétaire.
+
+**Construction** (déjà faite sur le serveur le 9 octobre 2026, environ 5 min) :
+```
+python3 warzone/generate_warzone.py
+cp -r warzone/datapack/lifecraft_warzone /opt/minecraft/world/datapacks/
+mc-cmd "reload"
+mc-cmd "function lifecraft:warzone/build"     # attendre « Warzone : construction terminée »
+```
+La construction charge elle-même les chunks de chaque étape (forceload), pas besoin d'être connecté.
+
+**Protection FactionsUUID**, à faire en jeu (la console ne peut pas claim). Place-toi dans le chunk central (par exemple en 72, -2104), puis **dans cet ordre** :
+```
+/f claim --radius 38 --faction warzone
+/f claim --radius 10 --faction safezone
+/f map
+```
+Un rayon *n* couvre (2n−1)×(2n−1) chunks : 75×75 de warzone, puis 19×19 de safezone (X -80..223, Z -2256..-1953) au centre.
+
+**Après construction** : `/ap create` et `/ap glass` ont été lancés depuis la console pour les deux avant-postes, et la zone « Colline » de `plugins/LifeKoth/config.yml` a été déplacée sur la nouvelle arène.
+
 ## Events KOTH (plugin LifeKoth)
 
 Plugin maison (`plugins/koth/`), compilé par GitHub Actions et installé automatiquement par `install.sh`.
@@ -255,7 +283,7 @@ Plugin maison (`plugins/koth/`), compilé par GitHub Actions et installé automa
 
 Réglages dans `plugins/LifeKoth/config.yml` : durée de capture, horaires, jours, loot, commandes de récompense. Avec FactionsUUID 4.x, les commandes d'admin sont sous `/fa` : la récompense de power s'écrit `fa power boost modify faction {faction} 5`.
 
-**Arène « Colline »** : dans la warzone, à 35 blocs au nord de l'arche du spawn (77, 65, -2180). Plateforme de 17×17, zone de capture de 7×7 bordée d'or, balise au centre dont le faisceau jaune se voit de loin. Le coffre de loot apparaît sur le socle en verre. Étant en warzone, personne ne peut la claim, y construire ou y poser de la TNT.
+**Arène « Colline »** : dans la warzone, entre le rempart du spawn et la faille, au nord (72, 79, -2340). Plateforme de 17×17, zone de capture de 7×7 bordée d'or, balise au centre dont le faisceau jaune se voit de loin. Le coffre de loot apparaît sur le socle en verre. Étant en warzone, personne ne peut la claim, y construire ou y poser de la TNT.
 
 ### Avant-postes (AP)
 
