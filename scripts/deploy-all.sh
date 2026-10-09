@@ -17,7 +17,9 @@ MAIN="$MC/plugins/FactionsUUID/config/main.conf"
 LOG="$MC/logs/latest.log"
 
 echo "== 1. Sauvegarde"
-mc-backup 2>&1 | tail -1
+# Version du dépôt (tolère les changements de la base CoreProtect pendant la lecture)
+install -m 755 "$REPO/scripts/mc-backup" /usr/local/bin/mc-backup
+mc-backup 2>&1 | tail -2
 
 echo "== 2. Arrêt du serveur"
 mc-cmd "say Mise à jour du serveur : redémarrage dans 10 s (environ 1 min)." || true

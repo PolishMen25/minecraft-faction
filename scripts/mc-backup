@@ -46,9 +46,17 @@ finish() {
 trap finish EXIT
 
 cd "$MC_DIR"
-tar --zstd -cf "$ARCHIVE.part" \
+# Code 1 de tar = « un fichier a changé pendant la lecture » : arrive avec la base de CoreProtect,
+# qui écrit en continu même avec save-off. L'archive reste utilisable : simple avertissement.
+rc=0
+tar --zstd -cf "$ARCHIVE.part" --warning=no-file-changed \
   --exclude='./backups' --exclude='./cache' --exclude='./libraries' \
-  --exclude='./versions' --exclude='./logs' --exclude='*.jar' .
+  --exclude='./versions' --exclude='./logs' --exclude='*.jar' . || rc=$?
+if (( rc > 1 )); then
+  exit "$rc"
+elif (( rc == 1 )); then
+  echo "Avertissement : des fichiers ont changé pendant la sauvegarde (base CoreProtect), archive conservée." >&2
+fi
 mv "$ARCHIVE.part" "$ARCHIVE"
 chown minecraft:minecraft "$ARCHIVE"
 
