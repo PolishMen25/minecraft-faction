@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Envoie une commande à la console du serveur : mc-cmd "whitelist add Pseudo"
+[[ $# -gt 0 ]] || { echo "Usage : mc-cmd \"commande\"" >&2; exit 1; }
+sudo -u minecraft tmux send-keys -t mc "$*" Enter
