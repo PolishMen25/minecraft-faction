@@ -116,7 +116,7 @@ Puis connecte-toi avec l'adresse IP de la VM, sur le port `25565`.
 
 ## Sauvegardes
 
-Le timer `minecraft-backup.timer` lance une sauvegarde **tous les jours à 5 h**. Les archives vont dans `/opt/minecraft/backups/` et seules les **7 dernières** sont gardées. Pendant la sauvegarde, l'écriture du monde est mise en pause pour que l'archive reste cohérente.
+Le timer `minecraft-backup.timer` lance une sauvegarde **tous les jours à 5 h**. Les archives vont dans `/opt/minecraft/backups/` et seules les **4 dernières** sont gardées (environ 3 Go chacune une fois la carte pré-générée ; pour en garder plus, prévois du disque et augmente `KEEP` dans `scripts/mc-backup`, puis relance `./install.sh`). Pendant la sauvegarde, l'écriture du monde est mise en pause pour que l'archive reste cohérente.
 
 Pour restaurer une archive :
 

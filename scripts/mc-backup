@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Sauvegarde les mondes, plugins et configs dans /opt/minecraft/backups.
-# Garde les KEEP dernières archives (7 par défaut).
+# Garde les KEEP dernières archives (4 par défaut : une archive d'un monde pré-généré
+# de 10 000 blocs pèse environ 3 Go).
 set -euo pipefail
 MC_DIR="${MC_DIR:-/opt/minecraft}"
-KEEP="${KEEP:-7}"
+KEEP="${KEEP:-4}"
 DEST="$MC_DIR/backups"
 STAMP="$(date +%Y-%m-%d_%H-%M)"
 
