@@ -163,7 +163,7 @@ Les archives sont sur le même disque que le monde : si ce disque lâche, tout e
 - `mc-alert ok|warn|crit "Titre" "Détail"` envoie une alerte au webhook Discord `DISCORD_WEBHOOK`, ou seulement au journal système s'il est vide.
 - `mc-watch` vérifie que le serveur tourne, l'espace disque et l'âge des sauvegardes (locales et hors site). Il n'alerte qu'au changement d'état : une alerte quand le problème apparaît, une quand il disparaît.
 
-Ils ne sont pas encore lancés automatiquement : il faut les brancher sur systemd (`ExecStartPost=/usr/local/bin/mc-backup-offsite` dans `minecraft-backup.service`, un timer de 5 minutes pour `mc-watch`, `OnFailure=` pour alerter en cas de crash).
+`install.sh` les branche sur systemd : `mc-backup-offsite` tourne après chaque sauvegarde, `minecraft-watch.timer` lance `mc-watch` toutes les 5 minutes, et un échec de `minecraft.service` ou de `minecraft-backup.service` déclenche une alerte (`OnFailure=minecraft-alert@...`). Historique des alertes : `journalctl -t minecraft-faction`.
 
 ## Jouer depuis l'extérieur
 
