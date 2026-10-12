@@ -245,7 +245,7 @@ Le build de `factions.zip` (678 × 655 × 214, fait en 1.19.4) a remplacé le sp
 - **Box de minage** : clairière au nord de la place (X 93..124, Z -2255..-2224, sol à Y=51), remise à neuf toutes les 10 minutes. On y descend depuis la place, on remonte avec `/spawn`.
 - **Enchantement** : la table et les bibliothèques prévues par le build, en (71, 71, -2059).
 - **Classement KOTH** : au-dessus de la place, devant le point d'apparition.
-- **Warps** : `/warp marche`, `/warp enchant`, `/warp box`, `/warp duel`. La place est ~17 blocs au-dessus de la forêt, sans escalier : on en descend en sautant (pas de dégâts en safezone) et on y remonte avec `/spawn`.
+- **Warps** : `/warp marche`, `/warp enchant`, `/warp box`, `/warp duel`. La place est ~17 blocs au-dessus de la forêt, sans escalier : on en descend en sautant (spawn-guard annule les dégâts de chute) et on y remonte avec `/spawn`.
 - **Accès aux ponts** : l'île est en contrebas du terrain d'origine. `warzone/generate_acces.py` construit des chaussées en escalier (7 de large, style des ponts) partout où le sol s'écarte d'au moins 2 blocs entre le bout d'un pont et l'île : falaise de 17 blocs au nord, marche de 7 au sud, descente de 5 à l'ouest ; l'est rejoint déjà le terrain. Le profil est calculé sur le monde réel (`warzone/anvil.py` lit les cartes de hauteur des fichiers région) : `save-all flush`, `python3 -I warzone/generate_acces.py`, copier `lifecraft_acces` dans `world/datapacks/`, `minecraft:reload`, `function lifecraft:acces/build`, et recommencer jusqu'à « rien à construire » sur les 4 ponts. Le chemin porte PvP → pont sud (`lifecraft_chemin`) a été recouvert par l'île : datapack désactivé.
 
 Installation (déjà faite sur le serveur) :
@@ -398,7 +398,7 @@ Plugin du kit (`plugins/core/`, jar `LifeCore-1.0.0.jar`, compilé comme LifeKot
 - **Tablist** : header/footer avec `{online}`, `{max}`, `{tps}`, `{ping}`, et nom précédé du préfixe LuckPerms puis du tag de faction ;
 - **Bienvenue** : annonce « Bienvenue à X, n°N ! » à la première connexion, title configurable ;
 - **Annonces automatiques** en rotation (toutes les 5 min par défaut) ;
-- **Spawn propre** (`spawn-guard`) : dans la safezone du spawn, aucune créature (seuls les PNJ tagués `lifecraft_pnj`, posés par commande, restent), aucun objet au sol, un objet jeté reste dans l'inventaire et on garde tout à la mort. La box est exclue pour les objets (les minerais tombent).
+- **Spawn propre** (`spawn-guard`) : dans la safezone du spawn, aucune créature (seuls les PNJ tagués `lifecraft_pnj`, posés par commande, restent), aucun objet au sol, pas de dégâts de chute (FactionsUUID les laisse passer en safezone), un objet jeté reste dans l'inventaire et on garde tout à la mort. La box est exclue pour les objets (les minerais tombent).
 
 | Commande | Rôle |
 |---|---|
