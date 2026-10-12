@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Génère les accès entre l'île du spawn (factions.zip) et les ponts de la faille.
+"""Génère les accès entre l'île du spawn (factions.zip) et les ponts de la faille, et la jetée du KOTH.
 
 L'île est en contrebas du terrain d'origine (sol à Y≈50-60 contre 62-75 autour) : sans aide, on ne
 monte pas du spawn sur les ponts nord, sud et ouest. Pour chaque pont, on suit l'axe du pont vers
 l'île en partant du tablier ; la chaussée colle au sol (médiane de sa largeur) mais ne change que d'un bloc à la fois
 (escaliers). Seule la partie où elle s'écarte du sol est construite : remblai dessous, dégagement
 au-dessus, bordures, garde-corps quand le vide dépasse un bloc, lanternes.
+
+Le KOTH (72, 64, -1625) est en mer, à ~100 blocs du pont sud : une jetée de 7 de large y mène depuis
+le bout du pont, à Y 64, en entaillant la butte qu'elle traverse.
 
 Le profil se calcule sur le monde réel (cartes de hauteur des fichiers région, sans feuillage) :
 lancer `save-all flush` avant, puis
@@ -61,17 +64,35 @@ def plan(name, hmap):
     # écarts d'au moins 2 blocs : là où l'on ne passe pas à pied (1 bloc se franchit en sautant)
     diff = [i for i in range(1, len(path)) if abs(path[i] - ground[i]) >= 2]
     if not diff:
-        return pos, ground, path, None
+        return pos, ground, path, None, (dx, dz)
     i1, i2 = max(1, diff[0] - 2), min(len(path) - 1, diff[-1] + 3)
     assert abs(path[i2] - ground[i2]) <= 1, f"{name} : la chaussée ne rejoint pas le sol, allonger MAX_LEN"
-    return pos, ground, path, (i1, i2)
+    return pos, ground, path, (i1, i2), (dx, dz)
 
 
-def commands(name, hmap):
-    pos, ground, path, seg = plan(name, hmap)
+def plan_koth(hmap):
+    """Jetée du bout extérieur du pont sud jusqu'à la plateforme du KOTH, au-dessus de la mer.
+
+    Elle descend du tablier (Y 66) au sol de la plateforme (Y 64), puis reste à plat : la butte
+    traversée est entaillée (dégagement adapté).
+    """
+    _, _, center, deck = next(b for b in wz.BRIDGES if b[0] == "sud")
+    x0, z0 = center, wz.OUTER[3] + APPROACH                     # dernier bloc de tablier côté sud
+    z_end = wz.KOTH["z"] - 8 - 2                                 # juste avant la bordure de la plateforme
+    pos, ground, path = [(x0, z0)], [deck], [deck]
+    for z in range(z0 + 1, z_end + 1):
+        pos.append((x0, z))
+        ground.append(sorted(hmap(x0 + k, z) for k in range(-W, W + 1))[W])
+        path.append(max(wz.KOTH["floor"], path[-1] - 1))
+    diff = [i for i in range(1, len(path)) if abs(path[i] - ground[i]) >= 2]
+    return pos, ground, path, ((1, len(path) - 1) if diff else None), (0, 1)
+
+
+def commands(name, plan_, hmap):
+    pos, ground, path, seg, (dx, dz) = plan_
     if seg is None:
         return [], None
-    (dx, dz) = bridge_end(name)[1]
+    clear = max([CLEAR] + [g - y + 2 for g, y in zip(ground, path)])   # entaille les buttes
     across = lambda x, z, k: (x + k * dz * dz, z + k * dx * dx)
     cmds = []
     i1, i2 = seg
@@ -82,7 +103,7 @@ def commands(name, hmap):
         x1, x2, z1, z2 = min(ax, bx), max(ax, bx), min(az, bz), max(az, bz)
         cmds.append(f"fill {x1} {y - FILL_DEPTH} {z1} {x2} {y - 1} {z2} minecraft:stone_bricks replace #minecraft:replaceable")
         cmds.append(f"fill {x1} {y - FILL_DEPTH} {z1} {x2} {y - 1} {z2} minecraft:stone_bricks replace minecraft:water")
-        cmds.append(f"fill {min(cx1, cx2)} {y + 1} {min(cz1, cz2)} {max(cx1, cx2)} {y + CLEAR} {max(cz1, cz2)} minecraft:air")
+        cmds.append(f"fill {min(cx1, cx2)} {y + 1} {min(cz1, cz2)} {max(cx1, cx2)} {y + clear} {max(cz1, cz2)} minecraft:air")
         (px1, pz1), (px2, pz2) = across(*pos[i], -W), across(*pos[i], W)
         cmds.append(f"fill {min(px1, px2)} {y} {min(pz1, pz2)} {max(px1, px2)} {y} {max(pz1, pz2)} minecraft:polished_andesite")
         cmds.append(f"setblock {pos[i][0]} {y} {pos[i][1]} minecraft:stone_bricks")
@@ -95,7 +116,7 @@ def commands(name, hmap):
                 cmds.append(f"fill {bxk} {y + 1} {bzk} {bxk} {y + 3} {bzk} minecraft:stone_brick_wall")
                 cmds.append(f"setblock {bxk} {y + 4} {bzk} minecraft:lantern")
     # escaliers sur la chaussée à chaque changement de niveau
-    d = bridge_end(name)[1]
+    d = (dx, dz)
     for i in range(i1, i2 + 1):
         if path[i] == path[i - 1] - 1:                          # descente vers l'île : marche en i-1
             j, y, f = i - 1, path[i - 1], FACING[(-d[0], -d[1])]
@@ -114,7 +135,7 @@ def commands(name, hmap):
 
 def main():
     names = [b[0] for b in wz.BRIDGES]
-    hmap = HeightMap(wz.OUTER[0], wz.OUTER[1], wz.OUTER[2], wz.OUTER[3])
+    hmap = HeightMap(wz.OUTER[0], wz.OUTER[1], wz.OUTER[2], wz.KOTH["z"])
     if OUT.exists():
         shutil.rmtree(OUT)
     fdir = OUT / "data" / NS / "function" / "acces"
@@ -122,13 +143,15 @@ def main():
     (OUT / "pack.mcmeta").write_text(json.dumps(
         {"pack": {"description": "Accès LifeCraft : île du spawn ↔ ponts de la faille",
                   "min_format": 107, "max_format": 107}}, ensure_ascii=False, indent=2) + "\n")
-    build = ["# Construit les accès île ↔ ponts (quelques secondes)."]
+    build = ["# Construit les accès île ↔ ponts et la jetée du KOTH (quelques secondes)."]
     delay = 40
-    for name in names:
-        cmds, area = commands(name, hmap)
-        pos, ground, path, seg = plan(name, hmap)
+    plans = {name: plan(name, hmap) for name in names}
+    plans["koth"] = plan_koth(hmap)
+    for name, p in plans.items():
+        cmds, area = commands(name, p, hmap)
+        pos, ground, path, seg, _ = p
         if area is None:
-            print(f"{name} : le terrain rejoint déjà le pont, rien à construire")
+            print(f"{name} : le terrain rejoint déjà la chaussée, rien à construire")
             continue
         a = "{} {} {} {}".format(*area)
         build += [f"forceload add {a}", f"schedule function {NS}:acces/{name} {delay}t append"]
