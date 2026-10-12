@@ -72,6 +72,25 @@ announcements:
     - "Retrouve toutes les infos sur &e/site&f."
     - "Masque ou affiche le scoreboard avec &e/sb&f."
 
+# ---------- Spawn propre ----------
+# Dans cette zone : aucune créature (sauf les PNJ tagués keep-tag, posés par commande),
+# aucun objet au sol. Un objet jeté reste dans l'inventaire ; à la mort, on garde tout.
+# Zone par défaut : la safezone du spawn (chunks -15..23 × -151..-113).
+spawn-guard:
+  enabled: true
+  world: world
+  min-x: -240
+  max-x: 383
+  min-z: -2416
+  max-z: -1793
+  keep-tag: lifecraft_pnj
+  # Zones où les objets restent permis, « x1,y1,z1,x2,y2,z2 » : la box (les minerais doivent tomber)
+  exclude:
+    - "93,23,-2255,124,70,-2224"
+  # Retrait des créatures et objets entrés dans la zone, toutes les N secondes
+  sweep-seconds: 5
+  drop-message: "&cOn ne jette rien au spawn : l'objet reste dans ton inventaire."
+
 # ---------- Liens ----------
 links:
   discord:

@@ -10,13 +10,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
-/** LifeCore : scoreboard, tablist, bienvenue, annonces et liens. */
+/** LifeCore : scoreboard, tablist, bienvenue, annonces, liens et spawn propre. */
 public final class LifeCore extends JavaPlugin {
 
     private FactionHook factions;
     private VaultHook vault;
     private BoardManager boards;
     private TabManager tab;
+    private SpawnGuard spawnGuard;
     private BukkitTask announceTask;
     private int announceIndex;
 
@@ -32,6 +33,8 @@ public final class LifeCore extends JavaPlugin {
         boards = new BoardManager(this, factions, vault);
         tab = new TabManager(this, factions, vault);
         getServer().getPluginManager().registerEvents(new JoinListener(this, boards, tab), this);
+        spawnGuard = new SpawnGuard(this);
+        getServer().getPluginManager().registerEvents(spawnGuard, this);
         start();
     }
 
@@ -44,6 +47,7 @@ public final class LifeCore extends JavaPlugin {
     private void start() {
         boards.start();
         tab.start();
+        spawnGuard.start();
         if (getConfig().getBoolean("announcements.enabled", true)) {
             long ticks = Math.max(1, getConfig().getLong("announcements.interval-minutes", 5)) * 60 * 20;
             announceTask = Bukkit.getScheduler().runTaskTimer(this, this::announce, ticks, ticks);
@@ -53,6 +57,7 @@ public final class LifeCore extends JavaPlugin {
     private void stop() {
         boards.stop();
         tab.stop();
+        spawnGuard.stop();
         if (announceTask != null) {
             announceTask.cancel();
             announceTask = null;
