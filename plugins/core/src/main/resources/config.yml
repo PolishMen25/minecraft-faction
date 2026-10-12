@@ -75,7 +75,7 @@ announcements:
 
 # ---------- Spawn propre ----------
 # Dans cette zone : aucune créature (sauf les PNJ tagués keep-tag, posés par commande),
-# aucun objet au sol. Un objet jeté reste dans l'inventaire ; à la mort, on garde tout.
+# aucun objet au sol, pas de dégâts de chute. Un objet jeté reste dans l'inventaire ; à la mort, on garde tout.
 # Zone par défaut : la safezone du spawn (chunks -15..23 × -151..-113).
 spawn-guard:
   enabled: true
@@ -91,6 +91,8 @@ spawn-guard:
   # Retrait des créatures et objets entrés dans la zone, toutes les N secondes
   sweep-seconds: 5
   drop-message: "&cOn ne jette rien au spawn : l'objet reste dans ton inventaire."
+  # Pas de dégâts de chute (la place est ~17 blocs au-dessus de la forêt, sans escalier)
+  no-fall-damage: true
 
 # ---------- Liens ----------
 links:

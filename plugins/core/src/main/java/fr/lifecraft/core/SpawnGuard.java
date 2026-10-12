@@ -16,6 +16,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.ItemSpawnEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -24,7 +25,8 @@ import org.bukkit.util.BoundingBox;
 
 /**
  * Spawn propre : aucune créature (sauf les PNJ marchands, posés par commande et tagués),
- * aucun objet au sol. Un objet jeté reste dans l'inventaire ; à la mort, on garde tout.
+ * aucun objet au sol, pas de dégâts de chute. Un objet jeté reste dans l'inventaire ; à la mort,
+ * on garde tout.
  * Les zones exclues (box de minage) laissent tomber les objets des blocs cassés ; on n'y jette
  * toujours rien et les créatures y restent interdites.
  */
@@ -40,6 +42,7 @@ final class SpawnGuard implements Listener {
     private final List<BoundingBox> excluded = new ArrayList<>();
     private String keepTag;
     private String dropMessage;
+    private boolean noFallDamage;
     private BukkitTask sweepTask;
 
     SpawnGuard(LifeCore plugin) {
@@ -71,6 +74,7 @@ final class SpawnGuard implements Listener {
         }
         keepTag = c.getString("keep-tag", "lifecraft_pnj");
         dropMessage = c.getString("drop-message", "");
+        noFallDamage = c.getBoolean("no-fall-damage", true);
         long ticks = Math.max(1, c.getLong("sweep-seconds", 5)) * 20;
         sweepTask = Bukkit.getScheduler().runTaskTimer(plugin, this::sweep, ticks, ticks);
     }
@@ -136,6 +140,15 @@ final class SpawnGuard implements Listener {
     public void onItemSpawn(ItemSpawnEvent e) {
         Location l = e.getLocation();
         if (inside(l) && !isExcluded(l.getX(), l.getY(), l.getZ())) {
+            e.setCancelled(true);
+        }
+    }
+
+    /** La place est ~17 blocs au-dessus de la forêt, sans escalier : on en descend en sautant. */
+    @EventHandler(ignoreCancelled = true)
+    public void onFall(EntityDamageEvent e) {
+        if (noFallDamage && e.getCause() == EntityDamageEvent.DamageCause.FALL
+                && e.getEntity() instanceof Player p && inside(p.getLocation())) {
             e.setCancelled(true);
         }
     }
