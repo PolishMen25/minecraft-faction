@@ -7,8 +7,9 @@ l'île en partant du tablier ; la chaussée colle au sol (médiane de sa largeur
 (escaliers). Seule la partie où elle s'écarte du sol est construite : remblai dessous, dégagement
 au-dessus, bordures, garde-corps quand le vide dépasse un bloc, lanternes.
 
-Le KOTH (72, 64, -1625) est en mer, à ~100 blocs du pont sud : une jetée de 7 de large y mène depuis
-le bout du pont, à Y 64, en entaillant la butte qu'elle traverse.
+Au-delà de la faille, le KOTH (72, 64, -1625) et l'avant-poste Est (552, 64, -2104) sont en mer, à ~100
+blocs de leur pont : une jetée de 7 de large y mène depuis le bout du pont, à plat, en entaillant les
+buttes. L'avant-poste Ouest (-408, 118, -2104) est en montagne : la chaussée suit le relief.
 
 Le profil se calcule sur le monde réel (cartes de hauteur des fichiers région, sans feuillage) :
 lancer `save-all flush` avant, puis
@@ -70,22 +71,45 @@ def plan(name, hmap):
     return pos, ground, path, (i1, i2), (dx, dz)
 
 
-def plan_koth(hmap):
-    """Jetée du bout extérieur du pont sud jusqu'à la plateforme du KOTH, au-dessus de la mer.
+def plan_target(hmap, start, d, deck, end, floor, follow):
+    """Chaussée du bout extérieur d'un pont jusqu'à une plateforme (KOTH, avant-poste).
 
-    Elle descend du tablier (Y 66) au sol de la plateforme (Y 64), puis reste à plat : la butte
-    traversée est entaillée (dégagement adapté).
+    follow=False : descend du tablier au niveau de la plateforme puis reste à plat (au-dessus de la
+    mer), en entaillant les buttes. follow=True : suit le relief (montagne), un bloc à la fois.
     """
-    _, _, center, deck = next(b for b in wz.BRIDGES if b[0] == "sud")
-    x0, z0 = center, wz.OUTER[3] + APPROACH                     # dernier bloc de tablier côté sud
-    z_end = wz.KOTH["z"] - 8 - 2                                 # juste avant la bordure de la plateforme
+    (x0, z0), (dx, dz) = start, d
     pos, ground, path = [(x0, z0)], [deck], [deck]
-    for z in range(z0 + 1, z_end + 1):
-        pos.append((x0, z))
-        ground.append(sorted(hmap(x0 + k, z) for k in range(-W, W + 1))[W])
-        path.append(max(wz.KOTH["floor"], path[-1] - 1))
+    for i in range(1, end + 1):
+        x, z = x0 + dx * i, z0 + dz * i
+        pos.append((x, z))
+        ground.append(sorted(hmap(x + k * dz * dz, z + k * dx * dx) for k in range(-W, W + 1))[W])
+        if follow:
+            path.append(max(min(ground[-1], path[-1] + 1), path[-1] - 1))
+        else:
+            path.append(max(floor, path[-1] - 1))
+    assert abs(path[-1] - floor) <= 1, f"chaussée vers {start} : arrive en Y {path[-1]}, plateforme en Y {floor}"
     diff = [i for i in range(1, len(path)) if abs(path[i] - ground[i]) >= 2]
-    return pos, ground, path, ((1, len(path) - 1) if diff else None), (0, 1)
+    return pos, ground, path, ((1, len(path) - 1) if diff else None), d
+
+
+def plan_platforms(hmap):
+    """KOTH (en mer, au sud), avant-postes Est (en mer) et Ouest (en montagne)."""
+    deck = {b[0]: b[3] for b in wz.BRIDGES}
+    sud_x = next(b for b in wz.BRIDGES if b[0] == "sud")[2]
+    est_z = next(b for b in wz.BRIDGES if b[0] == "est")[2]
+    est, ouest = (next(o for o in wz.OUTPOSTS if o["name"] == n) for n in ("Est", "Ouest"))
+    k_end = wz.KOTH["z"] - 8 - 2 - (wz.OUTER[3] + APPROACH)           # bordure de la plateforme r=8
+    e_end = est["x"] - 10 - 2 - (wz.OUTER[2] + APPROACH)              # avant-postes : r=10
+    o_end = (wz.OUTER[0] - APPROACH) - (ouest["x"] + 10 + 2)
+    return {
+        "koth": plan_target(hmap, (sud_x, wz.OUTER[3] + APPROACH), (0, 1), deck["sud"], k_end,
+                            wz.KOTH["floor"], False),
+        "ap_est": plan_target(hmap, (wz.OUTER[2] + APPROACH, est_z), (1, 0), deck["est"], e_end,
+                              est["floor"], False),
+        # pont ouest centré en Z -2088, avant-poste en Z -2104 (bord à -2093) : axe décalé en Z -2090
+        "ap_ouest": plan_target(hmap, (wz.OUTER[0] - APPROACH, ouest["z"] + 14), (-1, 0), deck["ouest"],
+                                o_end, ouest["floor"], True),
+    }
 
 
 def commands(name, plan_, hmap):
@@ -135,7 +159,7 @@ def commands(name, plan_, hmap):
 
 def main():
     names = [b[0] for b in wz.BRIDGES]
-    hmap = HeightMap(wz.OUTER[0], wz.OUTER[1], wz.OUTER[2], wz.KOTH["z"])
+    hmap = HeightMap(-430, wz.OUTER[1], 580, wz.KOTH["z"])
     if OUT.exists():
         shutil.rmtree(OUT)
     fdir = OUT / "data" / NS / "function" / "acces"
@@ -146,7 +170,7 @@ def main():
     build = ["# Construit les accès île ↔ ponts et la jetée du KOTH (quelques secondes)."]
     delay = 40
     plans = {name: plan(name, hmap) for name in names}
-    plans["koth"] = plan_koth(hmap)
+    plans.update(plan_platforms(hmap))
     for name, p in plans.items():
         cmds, area = commands(name, p, hmap)
         pos, ground, path, seg, _ = p
