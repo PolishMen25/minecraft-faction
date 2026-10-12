@@ -76,7 +76,7 @@ echo "== 6. Démarrage"
 systemctl start minecraft
 sleep 20
 timeout 300 bash -c "until grep -q 'Done (' $LOG; do sleep 3; done"
-grep -E "FactionsUUID\] Loaded|Life(Koth|Core|Items)\] Enabling|Done \(" "$LOG" | sed 's/.*INFO\]: //'
+grep -E "FactionsUUID\] Loaded|Life(Koth|Core|Items|Shop)\] Enabling|Done \(" "$LOG" | sed 's/.*INFO\]: //'
 echo "   erreurs au démarrage (hors GrimAC/version) :"
 grep -iE "error|exception" "$LOG" | grep -viE "GrimAC|unsupported|connect timed" | head -5 || true
 echo "== Terminé. Sauvegardes : $BK/*-$STAMP"

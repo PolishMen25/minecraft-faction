@@ -291,6 +291,8 @@ mc-cmd "function lifecraft:warzone/build"     # attendre « Warzone : constructi
 ```
 La construction charge elle-même les chunks de chaque étape (forceload), pas besoin d'être connecté.
 
+**Chemin porte PvP → pont sud** (`warzone/generate_chemin.py`, construit le 12 octobre 2026) : chaussée de 7 de large en X 69..75, de Z -1952 à -1801, qui descend du sol de la porte (Y 68) au tablier du pont (Y 66) par deux paliers en dalles. Même principe : `python3 warzone/generate_chemin.py`, copier `lifecraft_chemin` dans `world/datapacks/`, `reload`, puis `function lifecraft:chemin/build`.
+
 **Protection FactionsUUID**, à faire en jeu (la console ne peut pas claim). Place-toi dans le chunk central (par exemple en 72, -2104), puis **dans cet ordre** :
 ```
 /f claim --radius 38 --faction warzone
