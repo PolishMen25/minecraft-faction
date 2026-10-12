@@ -23,7 +23,7 @@ scoreboard:
     - "&eKills : &f{kills} &7| &eMorts : &f{deaths}"
     - "&eEn ligne : &f{online}"
     - ""
-    - "&6adresse.a.configurer"
+    - "&7Bon jeu !"
   # Texte affiché pour {faction} quand le joueur n'a pas de faction
   no-faction: "Aucune"
 
@@ -40,7 +40,7 @@ tablist:
   footer:
     - ""
     - "&eJoueurs : &f{online}&7/&f{max}  &8|  &eTPS : &f{tps}  &8|  &ePing : &f{ping} ms"
-    - "&7adresse.a.configurer"
+    - ""
   # Nom dans la tab : {prefix} (préfixe LuckPerms via Vault) {name} {faction}
   name-format: "{prefix}{name}{faction}"
   # Ajouté à la place de {faction} si le joueur a une faction ({tag} = nom de la faction)
@@ -67,9 +67,7 @@ announcements:
   prefix: "&6[&eLifeCraft&6] &f"
   # Envoyées en rotation, dans l'ordre
   messages:
-    - "Rejoins notre Discord avec &e/discord&f !"
     - "Crée ta faction avec &e/f create <nom>&f et claim tes terres."
-    - "Retrouve toutes les infos sur &e/site&f."
     - "Masque ou affiche le scoreboard avec &e/sb&f."
     - "Au spawn : &e/warp marche&f, &e/warp enchant&f, &e/warp box&f et &e/warp duel&f."
 
@@ -98,11 +96,11 @@ spawn-guard:
 links:
   discord:
     url: "https://discord.gg/A-CONFIGURER"
-    message: "&9Rejoins le Discord : &b&n{url}"
+    message: "&9Le Discord arrive bientôt !"   # avec un lien : "&9Rejoins le Discord : &b&n{url}"
   site:
     url: "https://site-a-configurer.example"
-    message: "&6Notre site : &e&n{url}"
-  hover: "&7Cliquer pour ouvrir"
+    message: "&6Le site arrive bientôt !"   # avec un lien : "&6Notre site : &e&n{url}"
+  hover: "&7Bientôt disponible"   # avec un lien : "&7Cliquer pour ouvrir"
 
 # ---------- Messages ----------
 messages:

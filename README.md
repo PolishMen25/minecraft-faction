@@ -241,7 +241,7 @@ Le build de `factions.zip` (678 × 655 × 214, fait en 1.19.4) a remplacé le sp
 - **Point d'apparition** : centre de la place, (100.5, 72, -2087.5).
 - **Safezone** : l'île entière à l'intérieur de la faille, chunks X -15..23, Z -151..-113 (`spawn/safezone-factions.sh`).
 - **Marché** : 8 marchands, mêmes échanges qu'avant, dans le hall couvert à l'est de la place (X 163..185).
-- **Arène de duel** : hall couvert à l'ouest de la place (X 13..35, Z -2106..-2068), zone libre LifeKoth avec PvP.
+- **Arène de duel** : hall couvert à l'ouest de la place (X 13..35, Z -2106..-2068), zone libre LifeKoth avec PvP. Comme tout le spawn, on y garde son inventaire à la mort.
 - **Box de minage** : clairière au nord de la place (X 93..124, Z -2255..-2224, sol à Y=51), remise à neuf toutes les 10 minutes. On y descend depuis la place, on remonte avec `/spawn`.
 - **Enchantement** : la table et les bibliothèques prévues par le build, en (71, 71, -2059).
 - **Classement KOTH** : au-dessus de la place, devant le point d'apparition.
@@ -468,7 +468,10 @@ plugins/shop/              Plugin LifeShop (boutique)
 
 ## Prochaines étapes
 
-- [ ] Vérifier le log du premier démarrage
+- [x] Vérifier le log du premier démarrage
 - [x] Régler les raids : TNT et creepers autorisés dans les claims (Faction classique), power de départ 5, régénération 1 point / 5 min, vampirisme 0,5 (appliqué par `scripts/deploy-all.sh`)
-- [ ] Créer les grades LuckPerms (joueur, VIP, modo, admin)
-- [ ] Plugins sur mesure façon LifeCraft : minerais, armures, events KOTH
+- [x] Créer les grades LuckPerms (default, vip, modo, admin : `scripts/setup-grades.sh`)
+- [x] Plugins sur mesure façon LifeCraft : LifeItems (minerai et équipement de faille), LifeKoth (KOTH, avant-postes, zones libres), LifeCore, LifeShop
+- [x] Spawn de factions.zip, accès aux ponts, jetées vers le KOTH et les avant-postes
+- [ ] Mettre les vrais liens dans `plugins/LifeCore/config.yml` quand ils existeront : adresse du serveur (scoreboard, tablist), Discord et site (`/discord` et `/site` répondent « bientôt » d'ici là)
+- [ ] Tester en jeu : jet d'objet et mort au spawn, chute depuis la place, minage dans la box (sa remise à neuf automatique est vérifiée), duel, marchands, enchantement, KOTH et avant-postes
