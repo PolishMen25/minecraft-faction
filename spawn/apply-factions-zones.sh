@@ -4,7 +4,7 @@
 #   /function lifecraft:factions/start
 #   - LifeKoth : zone libre « box » (clairière nord), « duel » (hall ouest), classement près du spawn
 #   - LifeCore : la box est exclue de spawn-guard (les minerais doivent tomber)
-#   - Essentials : /spawn au centre de la place (100.5, 72, -2087.5)
+#   - Essentials : /spawn au centre de la place (100.5, 72, -2087.5), warps box, duel, marche, enchant
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 MC="${MC_DIR:-/opt/minecraft}"
@@ -25,6 +25,17 @@ CORE="$MC/plugins/LifeCore/config.yml"
 ESS="$MC/plugins/Essentials/spawn.yml"
 cp -p "$ESS" "$BK/spawn.yml.bak-$STAMP"
 sed -i -E 's/^(    x: ).*/\1100.5/; s/^(    y: ).*/\172.0/; s/^(    z: ).*/\1-2087.5/' "$ESS"
+WORLD_UUID=$(sed -n 's/^    world: //p' "$ESS" | head -1)
+install -d -o minecraft -g minecraft "$MC/plugins/Essentials/warps"
+warp() {  # nom x y z yaw
+  printf 'world: %s\nworld-name: world\nx: %s\ny: %s\nz: %s\nyaw: %s\npitch: 0.0\nname: %s\n' \
+    "$WORLD_UUID" "$2" "$3" "$4" "$5" "$1" > "$MC/plugins/Essentials/warps/$1.yml"
+}
+warp box 109.5 52.0 -2254.5 0.0          # bord nord de la box
+warp duel 38.5 69.0 -2087.5 90.0         # entrée du hall ouest
+warp marche 161.5 69.0 -2087.5 -90.0     # entrée du hall est
+warp enchant 71.5 72.0 -2056.5 180.0     # devant la table d'enchantement
+chown -R minecraft:minecraft "$MC/plugins/Essentials/warps"
 cp -p "$KOTH" "$BK/LifeKoth-config.yml.bak-$STAMP"
 cp -p "$CORE" "$BK/LifeCore-config.yml.bak-$STAMP"
 
@@ -59,6 +70,10 @@ t = t[:i] + lb + t[j:]
 open(koth, "w").write(t)
 
 c = open(core).read()
+if "/warp" not in c:
+    c = c.replace('    - "Masque ou affiche le scoreboard avec &e/sb&f."',
+                  '    - "Masque ou affiche le scoreboard avec &e/sb&f."\n'
+                  '    - "Au spawn : &e/warp marche&f, &e/warp enchant&f, &e/warp box&f et &e/warp duel&f."')
 if "\n  exclude:" not in c:
     c, n = re.subn(r"(\n  keep-tag: [^\n]*)", r'\1\n  # Zones où les objets restent permis, « x1,y1,z1,x2,y2,z2 » : la box (les minerais doivent tomber)\n  exclude:\n    - "93,23,-2255,124,70,-2224"', c)
     assert n == 1
