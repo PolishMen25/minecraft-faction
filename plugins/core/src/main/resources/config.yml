@@ -71,6 +71,7 @@ announcements:
     - "Crée ta faction avec &e/f create <nom>&f et claim tes terres."
     - "Retrouve toutes les infos sur &e/site&f."
     - "Masque ou affiche le scoreboard avec &e/sb&f."
+    - "Au spawn : &e/warp marche&f, &e/warp enchant&f, &e/warp box&f et &e/warp duel&f."
 
 # ---------- Spawn propre ----------
 # Dans cette zone : aucune créature (sauf les PNJ tagués keep-tag, posés par commande),
