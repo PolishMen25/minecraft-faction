@@ -198,7 +198,7 @@ Le dossier `spawn/` contient un spawn médiéval de 64 × 64 blocs, généré pa
 
 Pour modifier le spawn, édite `generate_spawn.py` puis relance `python3 spawn/generate_spawn.py` (Pillow requis pour l'aperçu).
 
-### Spawn complet (304 × 304, datapack `lifecraft_spawn`)
+### Spawn complet (304 × 304, datapack `lifecraft_spawn`, remplacé)
 
 `spawn/generate_spawn_districts.py` génère le datapack `spawn/datapack/lifecraft_spawn`, qui agrandit le spawn médiéval jusqu'aux limites de la safezone (19 × 19 chunks, X -80..223, Z -2256..-1953). Le spawn médiéval lui-même (X 45..108, Z -2144..-2081) n'est pas modifié : le générateur vérifie qu'aucune commande n'y écrit, ni en dehors de la safezone, ni ne dépasse 32 768 blocs par `fill`. Tout est déterministe (graines fixes) : relancer le générateur ou le build donne le même résultat.
 
@@ -233,6 +233,25 @@ Comme pour la warzone, la construction charge elle-même les chunks de chaque é
 - **arène de duel** : ses 4 chunks doivent passer en **warzone** pour que le PvP y soit actif (les gradins, juste à l'extérieur, restent en safezone). Mort en warzone = perte de power.
 - **box** : en safezone, personne ne peut casser de bloc. Ses 4 chunks doivent être retirés de la safezone (wilderness) pour être minables ; le PvP y devient alors possible, et il faut empêcher qu'une faction les claim (aucune option dédiée dans FactionsUUID : à surveiller, ou à confier à un plugin de régions).
 - vérifier aussi que les joueurs peuvent, en safezone, ouvrir la porte de la salle d'enchantement, utiliser tables, enclumes et meule, et commercer avec les villageois (listes de matériaux protégés de la section `protection` de la config FactionsUUID).
+
+### Spawn de factions.zip (depuis le 12 octobre 2026)
+
+Le build de `factions.zip` (678 × 655 × 214, fait en 1.19.4) a remplacé le spawn complet ci-dessus : une île boisée avec, au centre, une place à Y=71 entourée de bâtiments. Il est collé avec FastAsyncWorldEdit en X -267..410, Y -2..211, Z -2431..-1777.
+
+- **Point d'apparition** : centre de la place, (100.5, 72, -2087.5).
+- **Safezone** : l'île entière à l'intérieur de la faille, chunks X -15..23, Z -151..-113 (`spawn/safezone-factions.sh`).
+- **Marché** : 8 marchands, mêmes échanges qu'avant, dans le hall couvert à l'est de la place (X 163..185).
+- **Arène de duel** : hall couvert à l'ouest de la place (X 13..35, Z -2106..-2068), zone libre LifeKoth avec PvP.
+- **Box de minage** : clairière au nord de la place (X 93..124, Z -2255..-2224, sol à Y=51), remise à neuf toutes les 10 minutes. On y descend depuis la place, on remonte avec `/spawn`.
+- **Enchantement** : la table et les bibliothèques prévues par le build, en (71, 71, -2059).
+- **Classement KOTH** : au-dessus de la place, devant le point d'apparition.
+
+Installation (déjà faite sur le serveur) :
+
+1. `spawn/install-factions-spawn.sh` installe FAWE et prépare `factions_ile.schem` avec `spawn/prepare_factions_schem.py`. Ce script rend persistantes les feuilles de jungle, qui sinon pourrissent dès le collage. Il remplace aussi les colonnes vides autour de l'île par du `structure_void` : un collage ordinaire creuserait le terrain jusqu'à Y=-2.
+2. En console, après `schedule clear lifecraft:spawn/box_tick` et `datapack disable "file/lifecraft_spawn"` (l'ancienne box se remettait à neuf par-dessus le nouveau build) : `//world world`, `//pos1 37,1,-2175`, `//schem load factions_ile`, `//paste -m !structure_void`.
+3. Serveur arrêté : `spawn/safezone-factions.sh` puis `spawn/apply-factions-zones.sh`. Ce dernier installe le datapack `lifecraft_factions` (généré par `spawn/generate_factions_spawn.py`) et recale les zones de LifeKoth, LifeCore et Essentials.
+4. Au démarrage : `function lifecraft:factions/start`.
 
 ## Grades (LuckPerms)
 
@@ -279,7 +298,7 @@ Le dossier `warzone/` contient `generate_warzone.py`, qui génère le datapack `
 
 - **Faille** : anneau carré de 40 blocs de large et d'environ 52 de profondeur, à 320 blocs du centre (bord extérieur X -288..431, Z -2464..-1745). Fond à Y=12.
 - **Passages** : 4 ponts au milieu des côtés, 4 remontées en escalier dans les angles.
-- **KOTH « Colline »** : (72, 79, -2340), entre le rempart du spawn et la faille.
+- **KOTH « Colline »** : (72, 65, -1625), au-delà de la faille, au sud du pont sud.
 - **Avant-postes** : « Est » (552, 65, -2104) et « Ouest » (-408, 119, -2104), au-delà de la faille. Chacun a une palissade, 4 tours de guet, une zone de capture de 7×7 et une balise dont le verre prend la couleur de la faction propriétaire.
 
 **Construction** (déjà faite sur le serveur le 9 octobre 2026, environ 5 min) :
@@ -321,7 +340,7 @@ Plugin maison (`plugins/koth/`), compilé par GitHub Actions et installé automa
 
 Réglages dans `plugins/LifeKoth/config.yml` : durée de capture, horaires, jours, loot, commandes de récompense. Avec FactionsUUID 4.x, les commandes d'admin sont sous `/fa` : la récompense de power s'écrit `fa power boost modify faction {faction} 5`.
 
-**Arène « Colline »** : dans la warzone, entre le rempart du spawn et la faille, au nord (72, 79, -2340). Plateforme de 17×17, zone de capture de 7×7 bordée d'or, balise au centre dont le faisceau jaune se voit de loin. Le coffre de loot apparaît sur le socle en verre. Étant en warzone, personne ne peut la claim, y construire ou y poser de la TNT.
+**Arène « Colline »** : dans la warzone, au-delà de la faille, à 120 blocs au sud du pont sud (72, 65, -1625). Reconstruction seule : `/function lifecraft:warzone/koth_build`. Plateforme de 17×17, zone de capture de 7×7 bordée d'or, balise au centre dont le faisceau jaune se voit de loin. Le coffre de loot apparaît sur le socle en verre. Étant en warzone, personne ne peut la claim, y construire ou y poser de la TNT.
 
 ### Avant-postes (AP)
 
@@ -376,7 +395,8 @@ Plugin du kit (`plugins/core/`, jar `LifeCore-1.0.0.jar`, compilé comme LifeKot
 - **Scoreboard latéral** par joueur (faction, power, terres, argent, kills/morts, joueurs en ligne, adresse), mis à jour toutes les 2 s sans clignotement ;
 - **Tablist** : header/footer avec `{online}`, `{max}`, `{tps}`, `{ping}`, et nom précédé du préfixe LuckPerms puis du tag de faction ;
 - **Bienvenue** : annonce « Bienvenue à X, n°N ! » à la première connexion, title configurable ;
-- **Annonces automatiques** en rotation (toutes les 5 min par défaut).
+- **Annonces automatiques** en rotation (toutes les 5 min par défaut) ;
+- **Spawn propre** (`spawn-guard`) : dans la safezone du spawn, aucune créature (seuls les PNJ tagués `lifecraft_pnj`, posés par commande, restent), aucun objet au sol, un objet jeté reste dans l'inventaire et on garde tout à la mort. La box est exclue pour les objets (les minerais tombent).
 
 | Commande | Rôle |
 |---|---|

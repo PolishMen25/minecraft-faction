@@ -4,7 +4,7 @@
 La warzone fait 75 × 75 chunks (1 200 × 1 200 blocs) autour du spawn. Une faille en anneau
 carré de 40 blocs de large, profonde d'environ 52 blocs, l'entoure à 320 blocs du centre :
 4 remontées dans les angles, 4 ponts au milieu des côtés. Entre le rempart du spawn et la faille,
-l'arène KOTH ; au-delà de la faille, deux avant-postes.
+au-delà de la faille, l'arène KOTH (au sud) et deux avant-postes (est et ouest).
 
 Usage : python3 warzone/generate_warzone.py   (écrit warzone/datapack/lifecraft_warzone)
 Puis sur le serveur : copier le dossier dans world/datapacks/, /reload,
@@ -54,8 +54,10 @@ BRIDGES = [
     ("est", "x", -2104, 65),
 ]
 
-# KOTH (entre le rempart du spawn et la faille, au nord) et avant-postes (au-delà de la faille)
-KOTH = {"name": "Colline", "x": 72, "z": -2340, "floor": 78}
+# KOTH et avant-postes, au-delà de la faille. Le KOTH était au nord (72, -2340), entre le rempart
+# et la faille : le spawn de factions.zip (X -267..410, Z -2431..-1777) le recouvre, il est donc
+# passé au sud, à 120 blocs du débouché du pont sud, au-dessus de la mer (comme l'avant-poste Est).
+KOTH = {"name": "Colline", "x": 72, "z": -1625, "floor": 64}
 OUTPOSTS = [
     {"name": "Est", "x": 552, "z": -2104, "floor": 64},
     {"name": "Ouest", "x": -408, "z": -2104, "floor": 118},
@@ -415,6 +417,22 @@ def write(job):
     return n, total
 
 
+def write_koth_only():
+    """Fonctions koth_build / koth_place : reconstruit seulement l'arène KOTH."""
+    job = Job("koth")
+    build_koth(job)
+    area = chunk_area(job.steps[0][0])
+    cmds = [c for _, cs, _ in job.steps for c in cs]
+    fdir = OUT / "data" / NS / "function" / "warzone"
+    fl = "{} {} {} {}".format(*area)
+    (fdir / "koth_build.mcfunction").write_text(
+        "# Construit seulement l'arène KOTH (charge la zone, puis pose les blocs 2 s plus tard)\n"
+        f"forceload add {fl}\n"
+        f"schedule function {NS}:warzone/koth_place 40t\n")
+    (fdir / "koth_place.mcfunction").write_text(
+        "\n".join(cmds + [f"forceload remove {fl}", "say Warzone : arène KOTH construite"]) + "\n")
+
+
 def main():
     job = Job("warzone")
     build_faille(job)
@@ -427,6 +445,7 @@ def main():
     for o in OUTPOSTS:
         build_outpost(job, o)
     n, total = write(job)
+    write_koth_only()
     print(f"{OUT} : {n} étapes, {total} commandes")
 
 

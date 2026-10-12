@@ -1,5 +1,5 @@
 # Étape 800/803
-forceload add 61 -2351 83 -2329
+forceload add 61 -1636 83 -1614
 fill 376 51 -2108 447 64 -2100 minecraft:stone_bricks replace #minecraft:replaceable
 fill 376 51 -2108 447 64 -2100 minecraft:stone_bricks replace minecraft:water
 fill 376 66 -2108 447 73 -2100 minecraft:air
