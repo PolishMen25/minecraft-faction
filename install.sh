@@ -35,6 +35,10 @@ PLUGINS=(
   "OldCombatMechanics||OldCombatMechanics|kernitus/OldCombatMechanics|^OldCombatMechanics.*\.jar$|https://hangar.papermc.io/kernitus/OldCombatMechanics"
   "LuckPerms|luckperms||||"
   "Chunky|chunky|Chunky|||"
+  # Journal des blocs (qui a cassé/posé quoi) : rollback des griefs, preuves de triche
+  "CoreProtect|coreprotect||||"
+  # Anti-cheat compatible ViaVersion (clients 1.8 à la dernière version)
+  "GrimAC|grimac||||"
   # Plugin KOTH du kit, compilé par GitHub Actions (plugins/koth)
   "LifeKoth|||PolishMen25/minecraft-faction|^LifeKoth.*\.jar$|"
   "Vault|||MilkBowl/Vault|^Vault\.jar$|"
@@ -196,6 +200,11 @@ copy_if_absent() {
 }
 copy_if_absent "$KIT_DIR/config/server.properties" "$MC_DIR/server.properties"
 copy_if_absent "$KIT_DIR/config/ops.json.example"   "$MC_DIR/ops.json.example"
+# Kits, MOTD et règlement EssentialsX en français (seulement à la première installation)
+install -d -o "$MC_USER" -g "$MC_USER" "$MC_DIR/plugins" "$MC_DIR/plugins/Essentials"
+for f in kits.yml motd.txt rules.txt; do
+  copy_if_absent "$KIT_DIR/config/essentials/$f" "$MC_DIR/plugins/Essentials/$f"
+done
 
 if [[ ! -f "$MC_DIR/eula.txt" ]] || ! grep -q '^eula=true' "$MC_DIR/eula.txt"; then
   if [[ "${EULA:-}" != "true" ]]; then
@@ -249,17 +258,26 @@ chown "$MC_USER:$MC_USER" "$MC_DIR/start.sh"
 
 # Outils d'administration
 # Lien dans /usr/bin : le shell ouvert par « pct enter » n'a pas /usr/local/bin dans son PATH
-for tool in mc-console mc-cmd mc-backup; do
+for tool in mc-console mc-cmd mc-backup mc-status mc-alert mc-watch mc-backup-offsite; do
   install -m 0755 "$KIT_DIR/scripts/$tool" "/usr/local/bin/$tool"
   ln -sf "/usr/local/bin/$tool" "/usr/bin/$tool"
 done
 
+# Alertes Discord et sauvegardes hors site : root seul peut lire (URL du webhook = secret)
+if [[ ! -e /etc/minecraft-faction.conf ]]; then
+  install -o root -g root -m 0600 "$KIT_DIR/config/minecraft-faction.conf" /etc/minecraft-faction.conf
+  c_ok "minecraft-faction.conf installé (alertes Discord et sauvegardes hors site à configurer)."
+else
+  c_info "minecraft-faction.conf existe déjà, conservé."
+fi
+
 # ----------------------------------------------------------------------------
-# 6. Services systemd (serveur + sauvegarde quotidienne)
+# 6. Services systemd (serveur, sauvegarde quotidienne, surveillance)
 # ----------------------------------------------------------------------------
 cat > "/etc/systemd/system/${SERVICE}.service" <<EOF
 [Unit]
 Description=Serveur Minecraft Faction (Paper ${MC_VERSION})
+OnFailure=minecraft-alert@%n.service
 After=network-online.target
 Wants=network-online.target
 
@@ -284,10 +302,43 @@ EOF
 cat > /etc/systemd/system/minecraft-backup.service <<EOF
 [Unit]
 Description=Sauvegarde du serveur Minecraft
+OnFailure=minecraft-alert@%n.service
 
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/mc-backup
+# Copie hors site (sans effet tant que OFFSITE_DIR est vide dans /etc/minecraft-faction.conf)
+ExecStartPost=/usr/local/bin/mc-backup-offsite
+EOF
+
+cat > /etc/systemd/system/minecraft-alert@.service <<EOF
+[Unit]
+Description=Alerte : échec de %i
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mc-alert crit "Échec du service %i" "Voir : journalctl -u %i -n 50"
+EOF
+
+cat > /etc/systemd/system/minecraft-watch.service <<EOF
+[Unit]
+Description=Surveillance du serveur Minecraft (service, disque, sauvegardes)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mc-watch
+EOF
+
+cat > /etc/systemd/system/minecraft-watch.timer <<EOF
+[Unit]
+Description=Surveillance du serveur Minecraft toutes les 5 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
 EOF
 
 cat > /etc/systemd/system/minecraft-backup.timer <<EOF
@@ -304,6 +355,7 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now minecraft-backup.timer >/dev/null
+systemctl enable --now minecraft-watch.timer >/dev/null
 systemctl enable "$SERVICE" >/dev/null
 if systemctl is-active --quiet "$SERVICE"; then
   c_info "Le serveur tourne déjà : redémarrage pour appliquer les mises à jour..."
@@ -320,6 +372,7 @@ echo "  Console du serveur  : mc-console      (quitter sans arrêter : Ctrl+B pu
 echo "  Commande ponctuelle : mc-cmd \"whitelist add Pseudo\""
 echo "  Logs                : tail -f $MC_DIR/logs/latest.log"
 echo "  Sauvegarde manuelle : mc-backup"
+echo "  État du serveur     : mc-status"
 echo
 if ((${#FAILED[@]})); then
   c_warn "Plugins à installer à la main : ${FAILED[*]}"

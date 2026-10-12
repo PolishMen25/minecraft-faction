@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Envoie une alerte sur Discord (webhook de /etc/minecraft-faction.conf) et dans le journal système.
+# Usage : mc-alert <ok|warn|crit> "Titre" ["Détail"]
+set -uo pipefail
+CONF="${MC_FACTION_CONF:-/etc/minecraft-faction.conf}"
+DISCORD_WEBHOOK=""
+[[ -f "$CONF" ]] && . "$CONF"
+
+level="${1:?niveau ok|warn|crit}" title="${2:?titre}" detail="${3:-}"
+case "$level" in
+  ok)   color=3066993;  icon="✅"; prio=info ;;
+  warn) color=15105570; icon="⚠️"; prio=warning ;;
+  *)    color=15158332; icon="🚨"; prio=err ;;
+esac
+
+logger -t minecraft-faction -p "user.$prio" -- "$title${detail:+ : $detail}"
+[[ -z "$DISCORD_WEBHOOK" ]] && exit 0
+
+payload=$(jq -n --arg t "$icon $title" --arg d "$detail" --argjson c "$color" --arg h "$(hostname)" \
+  '{username: "Serveur Faction", embeds: [{title: $t, description: $d, color: $c, footer: {text: $h}, timestamp: (now | todate)}]}')
+if ! curl -fsS -m 15 -H "Content-Type: application/json" -d "$payload" "$DISCORD_WEBHOOK" >/dev/null; then
+  logger -t minecraft-faction -p user.err "Échec de l'envoi de l'alerte Discord"
+  exit 1
+fi

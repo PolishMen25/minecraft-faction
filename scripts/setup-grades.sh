@@ -11,7 +11,7 @@ MC_DIR="${MC_DIR:-/opt/minecraft}"
 lp() { mc-cmd "lp $*"; sleep 0.3; }
 perms() { local g="$1"; shift; for p in "$@"; do lp group "$g" permission set "$p" true; done; }
 
-runuser -u minecraft -- tmux has-session -t mc 2>/dev/null \
+env -u TMUX runuser -u minecraft -- tmux has-session -t mc 2>/dev/null \
   || { echo "Le serveur ne tourne pas : systemctl start minecraft" >&2; exit 1; }
 
 echo "Création des groupes..."
@@ -35,7 +35,7 @@ perms default \
   essentials.msg essentials.r essentials.ignore essentials.mail essentials.mail.send \
   essentials.list essentials.motd essentials.rules essentials.help essentials.afk \
   essentials.balance essentials.balancetop essentials.pay \
-  essentials.warp essentials.warp.list essentials.kit essentials.kits.starter essentials.kits.pvp
+  essentials.warp essentials.warp.list essentials.kit essentials.kits.starter essentials.kits.pvp essentials.kits.quotidien
 
 echo "Permissions VIP..."
 perms vip \
@@ -50,7 +50,11 @@ perms modo \
   essentials.jail essentials.togglejail essentials.vanish essentials.invsee \
   essentials.tp essentials.tphere essentials.seen essentials.whois essentials.socialspy \
   essentials.sethome.multiple.staff essentials.chat.url \
-  minecraft.command.whitelist
+  minecraft.command.whitelist \
+  grim.alerts grim.alerts.enable-on-join \
+  coreprotect.inspect coreprotect.lookup coreprotect.lookup.block coreprotect.lookup.chat \
+  coreprotect.lookup.command coreprotect.lookup.container coreprotect.lookup.session \
+  coreprotect.lookup.sign coreprotect.lookup.kill
 
 echo "Permissions Admin..."
 lp group admin permission set '*' true
@@ -62,13 +66,22 @@ fi
 
 # Affiche le préfixe du grade dans le chat EssentialsX
 ess_cfg="$MC_DIR/plugins/Essentials/config.yml"
+# {DISPLAYNAME} contient déjà le préfixe LuckPerms : ne pas ajouter {PREFIX} (double préfixe)
 if [[ -f "$ess_cfg" ]] && grep -q "^  format: '<{DISPLAYNAME}> {MESSAGE}'" "$ess_cfg"; then
   cp "$ess_cfg" "$ess_cfg.bak"
-  sed -i "s|^  format: '<{DISPLAYNAME}> {MESSAGE}'|  format: '{PREFIX}{DISPLAYNAME}\&7: \&f{MESSAGE}'|" "$ess_cfg"
+  sed -i "s|^  format: '<{DISPLAYNAME}> {MESSAGE}'|  format: '{DISPLAYNAME}\&7: \&f{MESSAGE}'|" "$ess_cfg"
   mc-cmd "essentials reload"
   echo "Format du chat mis à jour (copie de sauvegarde : config.yml.bak)."
 else
   echo "Format du chat non modifié (déjà personnalisé ou introuvable)."
+fi
+
+# Kit de première connexion : remplace le kit d'exemple « tools » par « starter » (config/essentials/kits.yml)
+ess_kits="$MC_DIR/plugins/Essentials/kits.yml"
+if [[ -f "$ess_cfg" ]] && grep -q "^  kit: tools$" "$ess_cfg" && grep -q "^  starter:" "$ess_kits" 2>/dev/null; then
+  sed -i "s|^  kit: tools$|  kit: starter|" "$ess_cfg"
+  mc-cmd "essentials reload"
+  echo "Kit de première connexion : starter."
 fi
 
 echo

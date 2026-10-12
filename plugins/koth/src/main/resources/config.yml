@@ -28,9 +28,10 @@ rewards:
   # Commandes exécutées par la console pour le gagnant.
   # {player} = joueur de la faction gagnante présent dans la zone, {faction} = nom de la faction.
   # Les commandes contenant {faction} sont ignorées si le gagnant n'a pas de faction.
+  # FactionsUUID 4.x : les commandes d'admin sont sous /fa (ex. /fa power boost modify faction <faction> <valeur>).
   commands:
     - "eco give {player} 5000"
-    - "f powerboost f {faction} 5"
+    - "fa power boost modify faction {faction} 5"
   # Coffre de loot posé au-dessus du centre : MATERIAU:quantité[:enchant=niveau,enchant=niveau]
   loot-chest: true
   loot:
@@ -44,3 +45,48 @@ rewards:
 
 # KOTH créées en jeu avec /koth create (ne pas modifier à la main sauf pour corriger)
 zones: {}
+
+
+# Avant-postes (/ap) : zones capturables tenues dans la durée.
+# Une faction capture l'avant-poste en y restant seule pendant "capture-seconds" secondes.
+# Si plusieurs factions sont dans la zone (propriétaire compris), la progression est gelée (contesté) ;
+# si la zone est vide (ou ne contient que le propriétaire), la progression redescend de 1 par seconde.
+# Les joueurs sans faction ne comptent pas. L'état (propriétaire) est enregistré dans outposts.yml.
+outposts:
+  capture-seconds: 120
+  # Intervalle entre deux récompenses pour la faction propriétaire (minutes)
+  reward-interval-minutes: 10
+  # Commandes exécutées par la console à chaque intervalle.
+  # Une ligne contenant {player} est exécutée pour chaque membre en ligne de la faction propriétaire ;
+  # {faction} = nom de la faction propriétaire.
+  rewards:
+    - "eco give {player} 150"
+  # Avant-postes créés avec /ap create (ne pas modifier à la main sauf pour corriger).
+  # nom: {world, x, y, z, radius, height, glass: {x, y, z}} ; "glass" (optionnel) = bloc de verre
+  # teinté à la couleur du propriétaire (verre normal si neutre), à poser au-dessus d'une balise.
+  zones: {}
+
+# Classement affiché dans le monde (TextDisplay), mis à jour toutes les 60 s.
+# Positionné avec /koth classement <x> <y> <z>, retiré avec /koth classement off.
+leaderboard:
+  enabled: false
+  world: world
+  x: 0.5
+  y: 65.0
+  z: 0.5
+
+# Zones libres : cuboïdes qui restent en safezone FactionsUUID (donc non claimables)
+# mais où certaines actions sont autorisées. Rechargées par /koth reload, listées par /koth zones.
+# nom: {world, x1, y1, z1, x2, y2, z2, break, place, pvp}
+#   break: true  -> les joueurs peuvent casser les blocs (sauf reinforced_deepslate, bedrock, barrier)
+#   place: [...] -> matériaux que l'on peut poser (ex. [TORCH, WALL_TORCH])
+#   break-only: [...] -> si non vide, seuls ces matériaux peuvent être cassés (protège l'escalier, le bord, l'abri)
+#   pvp:   true  -> PvP autorisé si victime et attaquant (flèche comprise) sont tous deux dans la zone ;
+#                   la mort dans la zone ne fait pas perdre de power
+free-zones:
+  # Box de minage du spawn
+  box: {world: world, x1: -64, y1: 40, z1: -2032, x2: -33, y2: 80, z2: -2001, break: true, place: [TORCH, WALL_TORCH], pvp: false,
+        break-only: [STONE, COBBLESTONE, COAL_ORE, IRON_ORE, COPPER_ORE, GOLD_ORE, REDSTONE_ORE, LAPIS_ORE,
+                     DIAMOND_ORE, EMERALD_ORE, DEEPSLATE, GRAVEL, ANDESITE, DIORITE, GRANITE, TORCH, WALL_TORCH]}
+  # Arène de duel du spawn
+  duel: {world: world, x1: 64, y1: 55, z1: -2192, x2: 95, y2: 90, z2: -2161, break: false, place: [], pvp: true}

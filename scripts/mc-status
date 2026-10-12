@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Tableau de bord du serveur : service, TPS, joueurs, mémoire, disque, sauvegardes, Chunky.
+# Usage : mc-status
+set -uo pipefail
+MC_DIR="${MC_DIR:-/opt/minecraft}"
+LOG="$MC_DIR/logs/latest.log"
+
+b=$'\e[1m'; g=$'\e[32m'; r=$'\e[31m'; y=$'\e[33m'; d=$'\e[2m'; n=$'\e[0m'
+export LC_ALL=C.UTF-8
+# Padding calculé en caractères (printf compte les octets, ce qui décale les libellés accentués)
+row() { printf "  %s%*s %s\n" "$1" $((14 - ${#1})) "" "$2"; }
+
+# Envoie une commande à la console et renvoie les lignes de log qu'elle a produites
+ask() {
+  local before; before=$(wc -l < "$LOG")
+  env -u TMUX runuser -u minecraft -- tmux send-keys -t mc "$1" Enter 2>/dev/null || return 1
+  sleep "${2:-1}"
+  tail -n +"$((before + 1))" "$LOG" | grep -v "Task running"
+}
+
+echo "${b}Serveur Minecraft Faction${n}  ${d}($(date '+%d/%m/%Y %H:%M'))${n}"
+
+if systemctl is-active --quiet minecraft; then
+  since=$(systemctl show minecraft -p ActiveEnterTimestamp --value)
+  row "Service" "${g}en marche${n} ${d}depuis $since${n}"
+else
+  row "Service" "${r}arrêté${n} (systemctl start minecraft)"
+  exit 1
+fi
+
+out=$(ask "spark tps" 2)
+tps=$(grep -A1 "TPS from last" <<<"$out" | tail -1 | sed 's/.*\]  *//; s/\*//g')
+row "TPS" "${tps:-?} ${d}(5s, 10s, 1m, 5m, 15m)${n}"
+
+# La réponse de /list dépend de la langue d'Essentials : on prend la ligne qui suit la commande
+players=$(ask "list" 1 | grep -A1 "issued server command: /list" | tail -1 | sed 's/^.*INFO\]: //')
+row "Joueurs" "${players:-?}"
+
+pid=$(systemctl show minecraft -p MainPID --value)
+java=$(pgrep -P "$pid" -f paper.jar 2>/dev/null | head -1)
+java=${java:-$(pgrep -u minecraft -f paper.jar | head -1)}
+if [[ -n "$java" ]]; then
+  rss=$(awk '/VmRSS/ {printf "%.1f Go", $2/1048576}' "/proc/$java/status")
+  heap=$(tr '\0' '\n' < "/proc/$java/cmdline" | grep -oE '^-Xmx.*' | sed 's/-Xmx//')
+  row "Mémoire Java" "$rss utilisés ${d}(tas max $heap)${n}"
+fi
+row "Mémoire hôte" "$(free -h | awk '/Mem:/ {print $3" / "$2" ("$7" disponibles)"}')"
+row "Disque" "$(df -h "$MC_DIR" | awk 'NR==2 {print $3" / "$2" ("$5")"}')"
+row "Monde" "$(du -sh "$MC_DIR/world" 2>/dev/null | cut -f1)"
+
+last=$(ls -1t "$MC_DIR"/backups/backup_*.tar.zst 2>/dev/null | head -1)
+if [[ -n "$last" ]]; then
+  age=$(( ($(date +%s) - $(stat -c %Y "$last")) / 3600 ))
+  color=$g; (( age > 26 )) && color=$y
+  row "Sauvegarde" "${color}$(basename "$last")${n} ${d}($(du -h "$last" | cut -f1), il y a ${age} h, $(ls -1 "$MC_DIR"/backups/backup_*.tar.zst | wc -l) archives)${n}"
+else
+  row "Sauvegarde" "${r}aucune${n} (mc-backup)"
+fi
+
+declare -A label=([world]="Chunky monde" [world_nether]="Chunky nether" [world_the_end]="Chunky end")
+for w in world world_nether world_the_end; do
+  line=$(grep -E "\[Chunky\] Task (running|finished) for $w[ .]" "$LOG" | tail -1)
+  [[ -z "$line" ]] && continue
+  if grep -q "finished" <<<"$line"; then
+    row "${label[$w]}" "${g}terminé${n}"
+  else
+    row "${label[$w]}" "$(grep -oE '[0-9.]+%\), ETA: [0-9:]+' <<<"$line" | tr -d ')')"
+  fi
+done
+
+# "Detected unsafe terrain read during worldgen" : diagnostic de Paper sur une structure
+# vanilla (sculk du deep dark) pendant la génération, sans conséquence : compté à part.
+errors=$(grep -E "/(ERROR|SEVERE)\]" "$LOG" | grep -vc "unsafe terrain read")
+worldgen=$(grep -c "unsafe terrain read" "$LOG")
+row "Erreurs (log)" "$( (( errors > 0 )) && echo "${y}$errors${n} ${d}(grep ERROR $LOG)${n}" || echo "${g}0${n}")"
+if (( worldgen > 0 )); then row "" "${d}+ $worldgen avertissements de génération Paper (sans gravité)${n}"; fi

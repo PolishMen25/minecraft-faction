@@ -37,7 +37,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 public final class KothPlugin extends JavaPlugin {
 
-    private static final String PREFIX = ChatColor.GOLD + "" + ChatColor.BOLD + "[KOTH] " + ChatColor.RESET;
+    static final String PREFIX = ChatColor.GOLD + "" + ChatColor.BOLD + "[KOTH] " + ChatColor.RESET;
     private static final DateTimeFormatter MINUTE_KEY = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     /** Zone de KOTH : cube centré sur un bloc. */
@@ -77,6 +77,9 @@ public final class KothPlugin extends JavaPlugin {
     private BukkitTask tickTask;
     private String lastScheduleKey = "";
     private String lastWarnKey = "";
+    private OutpostManager outposts;
+    private Leaderboard leaderboard;
+    private FreeZones freeZones;
 
     @Override
     public void onEnable() {
@@ -88,6 +91,16 @@ public final class KothPlugin extends JavaPlugin {
         Bukkit.getScheduler().runTask(this, () -> factions = new FactionHook(getLogger()));
         Bukkit.getScheduler().runTaskTimer(this, this::checkSchedule, 20L * 10, 20L * 20);
         getLogger().info(zones.size() + " KOTH chargée(s).");
+        // Avant-postes (/ap) et classement affiché devant le spawn
+        outposts = new OutpostManager(this);
+        outposts.enable();
+        getCommand("ap").setExecutor(outposts);
+        getCommand("ap").setTabCompleter(outposts);
+        leaderboard = new Leaderboard(this, outposts);
+        leaderboard.enable();
+        // Zones libres du spawn (box de minage, arène de duel) : exceptions à la safezone
+        freeZones = new FreeZones(this);
+        freeZones.enable();
     }
 
     @Override
@@ -95,6 +108,34 @@ public final class KothPlugin extends JavaPlugin {
         if (active != null) {
             stop(false);
         }
+        if (outposts != null) {
+            outposts.saveState();
+        }
+    }
+
+    FactionHook factions() {
+        return factions;
+    }
+
+    YamlConfiguration stats() {
+        return stats;
+    }
+
+    void saveStats() {
+        try {
+            stats.save(statsFile);
+        } catch (IOException e) {
+            getLogger().warning("Impossible d'enregistrer stats.yml : " + e.getMessage());
+        }
+    }
+
+    /** Recharge config.yml, les KOTH et les avant-postes (/koth reload et /ap reload). */
+    void reloadAll() {
+        reloadConfig();
+        loadZones();
+        outposts.loadZones();
+        leaderboard.update();
+        freeZones.loadZones();
     }
 
     // ------------------------------------------------------------------ zones
@@ -289,11 +330,8 @@ public final class KothPlugin extends JavaPlugin {
 
         String statKey = "wins." + team.name();
         stats.set(statKey, stats.getInt(statKey) + 1);
-        try {
-            stats.save(statsFile);
-        } catch (IOException e) {
-            getLogger().warning("Impossible d'enregistrer stats.yml : " + e.getMessage());
-        }
+        saveStats();
+        leaderboard.update();
 
         for (String cmd : getConfig().getStringList("rewards.commands")) {
             if (cmd.contains("{faction}") && !team.faction()) {
@@ -390,6 +428,17 @@ public final class KothPlugin extends JavaPlugin {
                             + " (rayon " + z.radius() + ")");
                 }
             }
+            case "zones" -> {
+                if (!admin) {
+                    return noPerm(sender);
+                }
+                if (freeZones.all().isEmpty()) {
+                    sender.sendMessage(PREFIX + "Aucune zone libre (section free-zones de config.yml).");
+                }
+                for (String line : freeZones.descriptions()) {
+                    sender.sendMessage(PREFIX + line);
+                }
+            }
             case "top" -> {
                 ConfigurationSection w = stats.getConfigurationSection("wins");
                 if (w == null || w.getKeys(false).isEmpty()) {
@@ -460,11 +509,32 @@ public final class KothPlugin extends JavaPlugin {
                 if (!admin) {
                     return noPerm(sender);
                 }
-                reloadConfig();
-                loadZones();
-                sender.sendMessage(PREFIX + "Configuration rechargée (" + zones.size() + " KOTH).");
+                reloadAll();
+                sender.sendMessage(PREFIX + "Configuration rechargée (" + zones.size() + " KOTH, "
+                        + outposts.all().size() + " avant-poste(s)).");
             }
-            default -> sender.sendMessage(PREFIX + "/koth <info|list|top" + (admin ? "|start|stop|create|delete|reload" : "") + ">");
+            case "classement" -> {
+                if (!admin) {
+                    return noPerm(sender);
+                }
+                if (args.length == 2 && args[1].equalsIgnoreCase("off")) {
+                    leaderboard.disable();
+                    sender.sendMessage(PREFIX + "Classement retiré.");
+                    break;
+                }
+                World w = Bukkit.getWorld(args.length > 4 ? args[4] : "world");
+                Double x = args.length > 3 ? parseDouble(args[1]) : null;
+                Double y = args.length > 3 ? parseDouble(args[2]) : null;
+                Double z = args.length > 3 ? parseDouble(args[3]) : null;
+                if (w == null || x == null || y == null || z == null) {
+                    sender.sendMessage(PREFIX + "/koth classement <x> <y> <z> [monde=world] ou /koth classement off");
+                    break;
+                }
+                leaderboard.place(w, x, y, z);
+                sender.sendMessage(PREFIX + "Classement placé en " + x + " " + y + " " + z
+                        + " (affiché dès que le chunk est chargé, mis à jour toutes les 60 s).");
+            }
+            default -> sender.sendMessage(PREFIX + "/koth <info|list|top" + (admin ? "|start|stop|create|delete|reload|classement|zones" : "") + ">");
         }
         return true;
     }
@@ -475,13 +545,15 @@ public final class KothPlugin extends JavaPlugin {
         if (args.length == 1) {
             List<String> subs = new ArrayList<>(List.of("info", "list", "top"));
             if (sender.hasPermission("koth.admin")) {
-                subs.addAll(List.of("start", "stop", "create", "delete", "reload"));
+                subs.addAll(List.of("start", "stop", "create", "delete", "reload", "classement", "zones"));
             }
             for (String s : subs) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) {
                     out.add(s);
                 }
             }
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("classement") && sender.hasPermission("koth.admin")) {
+            out.add("off");
         } else if (args.length == 2 && (args[0].equalsIgnoreCase("start") || args[0].equalsIgnoreCase("delete"))) {
             for (Zone z : zones.values()) {
                 out.add(z.name());
@@ -497,7 +569,15 @@ public final class KothPlugin extends JavaPlugin {
         return true;
     }
 
-    private static int parseInt(String s, int def) {
+    private static Double parseDouble(String s) {
+        try {
+            return Double.parseDouble(s);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    static int parseInt(String s, int def) {
         try {
             return Integer.parseInt(s);
         } catch (NumberFormatException e) {

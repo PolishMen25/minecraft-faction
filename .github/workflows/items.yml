@@ -1,0 +1,29 @@
+name: LifeItems
+
+on:
+  push:
+    branches: [main]
+    paths: ['plugins/items/**', '.github/workflows/items.yml']
+  pull_request:
+    paths: ['plugins/items/**', '.github/workflows/items.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compiler le plugin
+        run: mvn -B package --file plugins/items/pom.xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LifeItems
+          path: plugins/items/target/LifeItems-*.jar

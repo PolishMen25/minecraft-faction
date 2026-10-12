@@ -1,0 +1,8 @@
+&8&m-----------------------------------
+&c&lFACTION &7- PvP 1.8 entre potes
+&7Bienvenue, {PLAYER}&7 ! &8({ONLINE} en ligne)
+&6/f help &7» créer ou rejoindre une faction
+&6/spawn &7» retour au spawn (zone protégée)
+&6/kit quotidien &7» ton kit de nourriture du jour
+&6/rules &7» le règlement
+&8&m-----------------------------------

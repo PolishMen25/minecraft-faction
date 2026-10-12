@@ -1,0 +1,90 @@
+# ============================================================
+#  LifeCore : scoreboard, tablist, bienvenue, annonces, liens
+#  Codes couleur avec & (ex. &6 doré, &l gras) ; &#RRGGBB accepté.
+#  Appliquer les changements : /lifecore reload
+# ============================================================
+
+# ---------- Scoreboard latéral ----------
+scoreboard:
+  enabled: true
+  # Intervalle de mise à jour, en secondes
+  update-seconds: 2
+  title: "&6&lLifeCraft"
+  # Lignes de haut en bas (15 maximum). Une chaîne vide donne une ligne vide.
+  # Variables : {faction} {power} {maxpower} {fpower} {fmaxpower} {lands}
+  #             {money} {kills} {deaths} {online} {player}
+  lines:
+    - ""
+    - "&eFaction : &f{faction}"
+    - "&ePower : &f{power}&7/&f{maxpower}"
+    - "&eFaction : &f{fpower}&7 power, &f{lands}&7 terres"
+    - ""
+    - "&eArgent : &a{money}"
+    - "&eKills : &f{kills} &7| &eMorts : &f{deaths}"
+    - "&eEn ligne : &f{online}"
+    - ""
+    - "&6adresse.a.configurer"
+  # Texte affiché pour {faction} quand le joueur n'a pas de faction
+  no-faction: "Aucune"
+
+# ---------- Tablist ----------
+tablist:
+  enabled: true
+  update-seconds: 5
+  # Variables : {online} {max} {tps} {ping} {player}
+  header:
+    - ""
+    - "&6&lLifeCraft"
+    - "&7Serveur Faction PvP"
+    - ""
+  footer:
+    - ""
+    - "&eJoueurs : &f{online}&7/&f{max}  &8|  &eTPS : &f{tps}  &8|  &ePing : &f{ping} ms"
+    - "&7adresse.a.configurer"
+  # Nom dans la tab : {prefix} (préfixe LuckPerms via Vault) {name} {faction}
+  name-format: "{prefix}{name}{faction}"
+  # Ajouté à la place de {faction} si le joueur a une faction ({tag} = nom de la faction)
+  faction-format: " &8[&7{tag}&8]"
+
+# ---------- Bienvenue ----------
+welcome:
+  # Annonce à la première connexion. {player} et {number} (nombre de joueurs uniques)
+  first-join-broadcast: "&6Bienvenue à &e{player}&6, n°&e{number}&6 !"
+  # Title affiché à chaque connexion
+  title:
+    enabled: true
+    title: "&6&lLifeCraft"
+    subtitle: "&7Bon jeu, &e{player}&7 !"
+    fade-in-ticks: 10
+    stay-ticks: 60
+    fade-out-ticks: 20
+
+# ---------- Annonces automatiques ----------
+announcements:
+  enabled: true
+  # Intervalle en minutes
+  interval-minutes: 5
+  prefix: "&6[&eLifeCraft&6] &f"
+  # Envoyées en rotation, dans l'ordre
+  messages:
+    - "Rejoins notre Discord avec &e/discord&f !"
+    - "Crée ta faction avec &e/f create <nom>&f et claim tes terres."
+    - "Retrouve toutes les infos sur &e/site&f."
+    - "Masque ou affiche le scoreboard avec &e/sb&f."
+
+# ---------- Liens ----------
+links:
+  discord:
+    url: "https://discord.gg/A-CONFIGURER"
+    message: "&9Rejoins le Discord : &b&n{url}"
+  site:
+    url: "https://site-a-configurer.example"
+    message: "&6Notre site : &e&n{url}"
+  hover: "&7Cliquer pour ouvrir"
+
+# ---------- Messages ----------
+messages:
+  sb-hidden: "&7Scoreboard &cmasqué&7."
+  sb-shown: "&7Scoreboard &aaffiché&7."
+  reloaded: "&aLifeCore rechargé."
+  player-only: "&cCommande réservée aux joueurs."

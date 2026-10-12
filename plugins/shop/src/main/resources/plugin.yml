@@ -1,0 +1,20 @@
+name: LifeShop
+version: '${project.version}'
+main: fr.lifecraft.shop.LifeShop
+api-version: '1.21'
+description: Boutique en menus (achat et vente) branchée sur Vault
+depend: [Vault]
+softdepend: [Essentials]
+commands:
+  shop:
+    description: Ouvrir la boutique
+    usage: /shop [categorie|reload]
+    aliases: [boutique]
+    permission: lifeshop.use
+permissions:
+  lifeshop.use:
+    description: Utiliser la boutique
+    default: true
+  lifeshop.admin:
+    description: Recharger la configuration
+    default: op

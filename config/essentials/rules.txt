@@ -1,0 +1,7 @@
+&c&lRÈGLEMENT DU SERVEUR
+&71. &fPas de triche (x-ray, fly, kill aura, auto-clic...).
+&72. &fPas d'exploitation de bug ni de duplication.
+&73. &fLe raid et le PvP sont autorisés hors safezone : c'est le jeu.
+&74. &fPas de spawn-kill à la sortie de la safezone.
+&75. &fRespect dans le chat, pas d'insultes gratuites.
+&76. &fUn souci ? Contacte un &2[Modo]&f ou un &4[Admin]&f.

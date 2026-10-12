@@ -1,15 +1,31 @@
 #!/usr/bin/env bash
 # Sauvegarde les mondes, plugins et configs dans /opt/minecraft/backups.
-# Garde les KEEP dernières archives (7 par défaut).
+# Garde les KEEP dernières archives (4 par défaut : une archive d'un monde pré-généré
+# de 10 000 blocs pèse environ 3 Go).
 set -euo pipefail
 MC_DIR="${MC_DIR:-/opt/minecraft}"
-KEEP="${KEEP:-7}"
+KEEP="${KEEP:-4}"
 DEST="$MC_DIR/backups"
 STAMP="$(date +%Y-%m-%d_%H-%M)"
 
-cmd() { runuser -u minecraft -- tmux send-keys -t mc "$*" Enter 2>/dev/null || true; }
+ARCHIVE="$DEST/backup_$STAMP.tar.zst"
+
+cmd() { env -u TMUX runuser -u minecraft -- tmux send-keys -t mc "$*" Enter 2>/dev/null || true; }
 running=false
-runuser -u minecraft -- tmux has-session -t mc 2>/dev/null && running=true
+env -u TMUX runuser -u minecraft -- tmux has-session -t mc 2>/dev/null && running=true
+
+# Espace libre : il faut au moins la taille de la dernière archive, plus 20 % de marge
+# (ou la taille du monde s'il n'y a pas encore d'archive). Un disque plein pendant
+# que le serveur écrit le monde peut le corrompre : mieux vaut ne pas sauvegarder.
+last=$(ls -1t "$DEST"/backup_*.tar.zst 2>/dev/null | head -1 || true)
+need_kb=$(( $(du -sk "${last:-$MC_DIR/world}" | cut -f1) * 12 / 10 ))
+free_kb=$(df -Pk "$DEST" | awk 'NR==2 {print $4}')
+if (( free_kb < need_kb )); then
+  echo "Espace insuffisant : $((free_kb / 1024)) Mo libres, environ $((need_kb / 1024)) Mo nécessaires." >&2
+  echo "Libère de la place dans $DEST ou baisse KEEP (actuellement $KEEP)." >&2
+  $running && cmd "say Sauvegarde annulée : disque presque plein, préviens un admin."
+  exit 1
+fi
 
 if $running; then
   cmd "say Sauvegarde en cours..."
@@ -17,13 +33,32 @@ if $running; then
   cmd "save-all flush"
   sleep 10
 fi
-trap '$running && { cmd "save-on"; cmd "say Sauvegarde terminée."; }' EXIT
+# En cas d'échec (disque plein, etc.), l'archive partielle est supprimée et l'écriture
+# du monde est toujours réactivée.
+finish() {
+  local rc=$?
+  rm -f "$ARCHIVE.part"
+  if $running; then
+    cmd "save-on"
+    if (( rc == 0 )); then cmd "say Sauvegarde terminée."; else cmd "say Échec de la sauvegarde, préviens un admin."; fi
+  fi
+}
+trap finish EXIT
 
 cd "$MC_DIR"
-tar --zstd -cf "$DEST/backup_$STAMP.tar.zst" \
+# Code 1 de tar = « un fichier a changé pendant la lecture » : arrive avec la base de CoreProtect,
+# qui écrit en continu même avec save-off. L'archive reste utilisable : simple avertissement.
+rc=0
+tar --zstd -cf "$ARCHIVE.part" --warning=no-file-changed \
   --exclude='./backups' --exclude='./cache' --exclude='./libraries' \
-  --exclude='./versions' --exclude='./logs' --exclude='*.jar' .
-chown minecraft:minecraft "$DEST/backup_$STAMP.tar.zst"
+  --exclude='./versions' --exclude='./logs' --exclude='*.jar' . || rc=$?
+if (( rc > 1 )); then
+  exit "$rc"
+elif (( rc == 1 )); then
+  echo "Avertissement : des fichiers ont changé pendant la sauvegarde (base CoreProtect), archive conservée." >&2
+fi
+mv "$ARCHIVE.part" "$ARCHIVE"
+chown minecraft:minecraft "$ARCHIVE"
 
 ls -1t "$DEST"/backup_*.tar.zst | tail -n +$((KEEP + 1)) | xargs -r rm -f
-echo "Sauvegarde : $DEST/backup_$STAMP.tar.zst ($(du -h "$DEST/backup_$STAMP.tar.zst" | cut -f1))"
+echo "Sauvegarde : $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1))"
